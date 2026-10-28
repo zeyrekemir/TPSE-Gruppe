@@ -329,9 +329,9 @@ export function runIntroScene(
     const g = c.getContext('2d')!
     const base = new THREE.Color(color)
     const tone = (towards: number, amount: number) => `#${base.clone().lerp(new THREE.Color(towards), amount).getHexString()}`
-    // Black letters in the site's display font (Unbounded), on a bright tile so they always stand out.
+    // Black letters in the site's display font (Orbitron), on a bright tile so they always stand out.
     const ink = '#0b0c14'
-    const font = (px: number) => `900 ${px}px "Unbounded", "Plus Jakarta Sans", system-ui, sans-serif`
+    const font = (px: number) => `900 ${px}px "Orbitron", "Plus Jakarta Sans", system-ui, sans-serif`
 
     function draw() {
       g.setTransform(4, 0, 0, 4, 0, 0)
@@ -415,7 +415,8 @@ export function runIntroScene(
       g.restore()
 
       // Name: as large as fits the area below the badge (200..470), on one, two or three lines.
-      const { lines, size } = fitLabel(label, S - 96, 250, (text, px) => {
+      // (Narrower than the area, to leave room for the thickening outline below.)
+      const { lines, size } = fitLabel(label, S - 116, 240, (text, px) => {
         g.font = font(px)
         return g.measureText(text).width
       })
@@ -429,7 +430,15 @@ export function runIntroScene(
       g.shadowOffsetY = 2.5
       const lineHeight = size * 1.12
       const centre = 336
-      lines.forEach((line, i) => g.fillText(line, S / 2, centre + (i - (lines.length - 1) / 2) * lineHeight))
+      // Heavy letters like the site's headings: an outline in the ink thickens Orbitron's strokes.
+      g.strokeStyle = ink
+      g.lineWidth = size * 0.1
+      g.lineJoin = 'round'
+      lines.forEach((line, i) => {
+        const y = centre + (i - (lines.length - 1) / 2) * lineHeight
+        g.strokeText(line, S / 2, y)
+        g.fillText(line, S / 2, y)
+      })
       g.shadowColor = 'transparent'
     }
 
@@ -438,7 +447,7 @@ export function runIntroScene(
     texture.colorSpace = THREE.SRGBColorSpace
     texture.anisotropy = renderer.capabilities.getMaxAnisotropy()
     // The web font may still be loading the first time: redraw with it once it is there.
-    document.fonts?.load('900 80px "Unbounded"').then(() => {
+    document.fonts?.load('900 80px "Orbitron"').then(() => {
       draw()
       texture.needsUpdate = true
     })

@@ -37,7 +37,8 @@
   --off-soft: rgb(148 163 184 / 0.15);
 
   --font: 'Plus Jakarta Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
-  --font-display: 'Unbounded', var(--font);
+  /* Headings: Orbitron, a square geometric face (every letter as straight-edged as an E). */
+  --font-display: 'Orbitron', var(--font);
 
   color-scheme: dark;
 }
@@ -2307,4 +2308,23 @@ button.sso {
   .legal {
     padding: 1.4rem 1.2rem;
   }
+}
+/* Heavy square headings: Orbitron's heaviest weight is still fairly thin, so an outline in the letters' own paint
+   thickens them in proportion to their size. On gradient text (background-clip: text) the outline shows the
+   gradient too. */
+h1,
+.brand-text strong,
+.stat-num,
+.fc .fc-toolbar-title,
+.login-watermark,
+.mega,
+.logo-word,
+.tuid-text,
+.story-title,
+.story-feature h2,
+.story-word,
+.story-cta h2,
+.legal h1 {
+  -webkit-text-stroke: 0.05em currentColor;
+  paint-order: stroke fill;
 }
