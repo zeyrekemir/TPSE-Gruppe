@@ -3,7 +3,7 @@ import { initReactI18next } from 'react-i18next'
 
 const en = {
   app: { title: 'PEARL Robot Platform' },
-  nav: { robots: 'Robots', calendar: 'Calendar', tickets: 'Maintenance', logs: 'Experiments', stats: 'Statistics', users: 'Users', logout: 'Log out' },
+  nav: { robots: 'Robots', calendar: 'Calendar', tickets: 'Maintenance', logs: 'Experiments', stats: 'Statistics', users: 'Users', logout: 'Log out', skip: 'Skip to content' },
   common: {
     save: 'Save', cancel: 'Cancel', delete: 'Delete', edit: 'Edit', add: 'Add', loading: 'Loading…',
     none: '—', confirmDelete: 'Really delete?', all: 'All', name: 'Name', actions: 'Actions',
@@ -68,7 +68,7 @@ const en = {
   },
   user: {
     new: 'New user', username: 'Username', displayName: 'Display name', email: 'E-mail', role: 'Role',
-    password: 'Password', source: 'Source', active: 'Active', roles: { admin: 'Admin', member: 'Member' },
+    password: 'Password', source: 'Source', active: 'Active', erase: 'Erase', eraseConfirm: 'Erase {{name}}? Name, e-mail and sign-in are removed for good, future bookings are cancelled. Past bookings, reports and logs stay as lab records without the name. This cannot be undone.', roles: { admin: 'Admin', member: 'Member' },
   },
 }
 
@@ -76,7 +76,7 @@ type Dict = typeof en
 
 const de: Dict = {
   app: { title: 'PEARL Roboter-Plattform' },
-  nav: { robots: 'Roboter', calendar: 'Kalender', tickets: 'Wartung', logs: 'Versuche', stats: 'Statistik', users: 'Nutzer', logout: 'Abmelden' },
+  nav: { robots: 'Roboter', calendar: 'Kalender', tickets: 'Wartung', logs: 'Versuche', stats: 'Statistik', users: 'Nutzer', logout: 'Abmelden', skip: 'Zum Inhalt springen' },
   common: {
     save: 'Speichern', cancel: 'Abbrechen', delete: 'Löschen', edit: 'Bearbeiten', add: 'Hinzufügen', loading: 'Lädt…',
     none: '—', confirmDelete: 'Wirklich löschen?', all: 'Alle', name: 'Name', actions: 'Aktionen',
@@ -141,7 +141,7 @@ const de: Dict = {
   },
   user: {
     new: 'Neuer Nutzer', username: 'Benutzername', displayName: 'Anzeigename', email: 'E-Mail', role: 'Rolle',
-    password: 'Passwort', source: 'Quelle', active: 'Aktiv', roles: { admin: 'Admin', member: 'Mitglied' },
+    password: 'Passwort', source: 'Quelle', active: 'Aktiv', erase: 'Löschen', eraseConfirm: '{{name}} löschen? Name, E-Mail und Zugang werden endgültig entfernt, künftige Buchungen storniert. Vergangene Buchungen, Meldungen und Protokolle bleiben ohne Namen als Laborunterlagen erhalten. Das lässt sich nicht rückgängig machen.', roles: { admin: 'Admin', member: 'Mitglied' },
   },
 }
 

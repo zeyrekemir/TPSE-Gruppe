@@ -154,7 +154,8 @@ export default function WelcomePage({ children }: { children: ReactNode }) {
     <div className="story">
       <section className="story-stage" ref={stageRef} aria-label="PEARL Robot Hub">
         <div className="story-sticky">
-          <canvas ref={canvasRef} className="story-canvas" />
+          {/* Decorative: everything the animation shows is also in the captions next to it. */}
+          <canvas ref={canvasRef} className="story-canvas" aria-hidden="true" />
           <div className="story-vignette" />
 
           <div className="story-beat story-hero" ref={beat('hero')}>

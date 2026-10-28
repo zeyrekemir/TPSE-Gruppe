@@ -34,6 +34,17 @@ export default function UsersPage() {
     users.reload()
   }
 
+  async function erase(id: number, name: string) {
+    if (!window.confirm(t('user.eraseConfirm', { name }))) return
+    try {
+      await api.eraseUser(id)
+      setError(null)
+    } catch (err) {
+      setError((err as Error).message)
+    }
+    users.reload()
+  }
+
   return (
     <section>
       <h1>{t('nav.users')}</h1>
@@ -84,6 +95,9 @@ export default function UsersPage() {
               <th>{t('user.source')}</th>
               <th>{t('user.role')}</th>
               <th>{t('user.active')}</th>
+              <th>
+                <span className="sr-only">{t('user.erase')}</span>
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -96,6 +110,7 @@ export default function UsersPage() {
                 <td>
                   <select
                     value={u.role}
+                    aria-label={t('user.role')}
                     disabled={u.id === me?.id}
                     onChange={(e) => update(u.id, { role: e.target.value as Role })}
                   >
@@ -109,7 +124,15 @@ export default function UsersPage() {
                     checked={u.is_active}
                     disabled={u.id === me?.id}
                     onChange={(e) => update(u.id, { is_active: e.target.checked })}
+                    aria-label={t('user.active')}
                   />
+                </td>
+                <td>
+                  {u.id !== me?.id && !u.username.startsWith('[deleted') && (
+                    <button type="button" className="secondary danger" onClick={() => erase(u.id, u.display_name)}>
+                      {t('user.erase')}
+                    </button>
+                  )}
                 </td>
               </tr>
             ))}

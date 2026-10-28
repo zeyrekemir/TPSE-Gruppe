@@ -1,4 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Unbounded:wght@700;900&display=swap');
 
 /* =====================================================================
    Liquid glass design system
@@ -58,7 +57,7 @@
   --hover: rgb(20 22 49 / 0.05);
 
 
-  --ok: #059669;
+  --ok: #047857; /* 5.5:1 on white; #059669 only reached 3.8:1, below WCAG AA for text */
   --ok-soft: rgb(16 185 129 / 0.14);
   --info: #2563eb;
   --info-soft: rgb(59 130 246 / 0.14);
@@ -477,6 +476,43 @@ textarea {
 select option {
   background: rgb(var(--glass-rgb));
   color: var(--text);
+}
+/* Keyboard focus must be visible on every control (WCAG 2.4.7); the browser's default ring disappears on glass. */
+a:focus-visible,
+button:focus-visible,
+summary:focus-visible,
+[tabindex]:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 8px;
+}
+/* For screen readers only: e.g. names of columns that show only buttons. */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+/* First stop for keyboard users: jump past the navigation straight to the page. */
+.skip-link {
+  position: fixed;
+  left: 1rem;
+  top: -4rem;
+  z-index: 100;
+  padding: 0.6rem 1rem;
+  border-radius: 10px;
+  background: var(--accent);
+  color: #fff;
+  text-decoration: none;
+  transition: top 0.15s;
+}
+.skip-link:focus {
+  top: 1rem;
 }
 input:focus,
 select:focus,

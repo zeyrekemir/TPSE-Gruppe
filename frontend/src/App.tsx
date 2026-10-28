@@ -84,7 +84,9 @@ function Shell() {
   usePauseMotionWhileInteracting()
 
   // Imprint and privacy notice are public: shown whether signed in or not.
-  const legal = pathname === '/impressum' ? 'imprint' : pathname === '/datenschutz' ? 'privacy' : null
+  const legal = ({ '/impressum': 'imprint', '/datenschutz': 'privacy', '/barrierefreiheit': 'accessibility' } as const)[
+    pathname as '/impressum'
+  ]
 
   let content
   if (loading) {
@@ -117,6 +119,9 @@ function Shell() {
     ]
     const app = (
       <div className="layout">
+        <a className="skip-link" href="#main">
+          {t('nav.skip')}
+        </a>
         <aside className="sidebar glass">
           <div className="brand">
             <Logo size={42} />
@@ -152,7 +157,7 @@ function Shell() {
             <LegalLinks />
           </div>
         </aside>
-        <main className="page-enter" key={user.id}>
+        <main className="page-enter" key={user.id} id="main" tabIndex={-1}>
           <Suspense fallback={<p className="muted">{t('common.loading')}</p>}>
             <Routes>
               <Route path="/robots" element={<RobotsPage />} />

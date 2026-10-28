@@ -10,7 +10,7 @@ import { useAuth } from '../auth'
  * (ROBOTS_LEGAL_CONTACT_*), so it can be changed without a new build. The privacy text describes exactly what
  * this application stores; keep it in step with the code.
  */
-export default function LegalPage({ kind }: { kind: 'imprint' | 'privacy' }) {
+export default function LegalPage({ kind }: { kind: 'imprint' | 'privacy' | 'accessibility' }) {
   const { i18n } = useTranslation()
   const { user } = useAuth()
   const [info, setInfo] = useState<LegalInfo | null>(null)
@@ -26,11 +26,9 @@ export default function LegalPage({ kind }: { kind: 'imprint' | 'privacy' }) {
         <Link to={user ? '/robots' : '/'} className="legal-back">
           {de ? '← Zurück' : '← Back'}
         </Link>
-        {kind === 'imprint' ? (de ? <ImprintDe contact={contact} /> : <ImprintEn contact={contact} />) : de ? (
-          <PrivacyDe contact={contact} info={info} />
-        ) : (
-          <PrivacyEn contact={contact} info={info} />
-        )}
+        {kind === 'imprint' && (de ? <ImprintDe contact={contact} /> : <ImprintEn contact={contact} />)}
+        {kind === 'privacy' && (de ? <PrivacyDe contact={contact} info={info} /> : <PrivacyEn contact={contact} info={info} />)}
+        {kind === 'accessibility' && (de ? <AccessibilityDe contact={contact} /> : <AccessibilityEn contact={contact} />)}
         <LegalLinks />
       </article>
     </div>
@@ -45,7 +43,23 @@ export function LegalLinks() {
     <nav className="legal-links" aria-label={de ? 'Rechtliches' : 'Legal'}>
       <Link to="/impressum">{de ? 'Impressum' : 'Imprint'}</Link>
       <Link to="/datenschutz">{de ? 'Datenschutz' : 'Privacy'}</Link>
+      <Link to="/barrierefreiheit">{de ? 'Barrierefreiheit' : 'Accessibility'}</Link>
     </nav>
+  )
+}
+
+/** Shown to signed-in people only: saves their data as a JSON file. */
+function MyDataButton({ label }: { label: string }) {
+  const { user } = useAuth()
+  const [error, setError] = useState<string | null>(null)
+  if (!user) return null
+  return (
+    <p>
+      <button type="button" className="secondary" onClick={() => api.downloadMyData().catch((e: Error) => setError(e.message))}>
+        {label}
+      </button>
+      {error && <span className="legal-missing"> {error}</span>}
+    </p>
   )
 }
 
@@ -138,6 +152,103 @@ function ImprintEn({ contact }: { contact: ReactNode }) {
   )
 }
 
+// Enforcement body as named in TU Darmstadt's own accessibility statement (tu-darmstadt.de/barrierefreiheit).
+const ARBITRATION = (
+  <address>
+    Schlichtungsstelle nach dem Behindertengleichstellungsgesetz bei dem Beauftragten der Bundesregierung für die
+    Belange von Menschen mit Behinderungen
+    <br />
+    Mauerstraße 53, 10117 Berlin
+    <br />
+    <a href="mailto:info@schlichtungsstelle-bgg.de">info@schlichtungsstelle-bgg.de</a>
+  </address>
+)
+
+function AccessibilityDe({ contact }: { contact: ReactNode }) {
+  return (
+    <>
+      <h1>Erklärung zur Barrierefreiheit</h1>
+      <p>
+        Die TU Darmstadt ist bemüht, den PEARL Robot Hub im Einklang mit der Richtlinie (EU) 2016/2102 und den
+        Gleichstellungsgesetzen von Bund und Ländern barrierefrei zugänglich zu machen. Maßstab sind die Web Content
+        Accessibility Guidelines (WCAG) 2.1, Stufe AA.
+      </p>
+      <h2>Stand der Vereinbarkeit</h2>
+      <p>Diese Anwendung ist teilweise vereinbar. Bedienbar sind alle Funktionen per Tastatur; es gibt eine
+        Sprungmarke zum Inhalt, sichtbare Fokusrahmen, beschriftete Bedienelemente, ausreichende Kontraste
+        (mindestens 4,5:1) in hellem und dunklem Design, und Animationen entfallen, wenn das Betriebssystem
+        „Bewegung reduzieren“ meldet.</p>
+      <h2>Nicht barrierefreie Inhalte</h2>
+      <ul>
+        <li>
+          Die 3D-Animation vor der Anmeldung ist für Screenreader ausgeblendet; was sie zeigt, steht in den Texten
+          daneben. Sie lässt sich mit „Zur Anmeldung springen“ überspringen und in den Darstellungseinstellungen abschalten.
+        </li>
+        <li>
+          Im Kalender lassen sich Buchungen per Maus ziehen; dieselben Buchungen gelingen über das Formular, auch per
+          Tastatur.
+        </li>
+        <li>Die Diagramme der Statistikseite haben noch keine vollständige Textalternative.</li>
+        <li>
+          Sehr hohe Transparenz der Glasflächen (einstellbar unter „Darstellung“) kann den Kontrast verringern; die
+          Voreinstellung erfüllt die Anforderungen.
+        </li>
+      </ul>
+      <h2>Erstellung dieser Erklärung</h2>
+      <p>
+        Erstellt am 28.10.2026 auf Grundlage einer Selbstbewertung (Prüfung des Codes, berechnete Kontraste,
+        Tastaturbedienung). Ein Test durch Menschen mit Behinderungen steht noch aus.
+      </p>
+      <h2>Barrieren melden</h2>
+      <p>Wenn Ihnen Barrieren auffallen, wenden Sie sich bitte an:</p>
+      {contact}
+      <h2>Durchsetzungsverfahren</h2>
+      <p>Erhalten Sie auf eine Meldung keine zufriedenstellende Antwort, können Sie sich wenden an die</p>
+      {ARBITRATION}
+    </>
+  )
+}
+
+function AccessibilityEn({ contact }: { contact: ReactNode }) {
+  return (
+    <>
+      <h1>Accessibility statement</h1>
+      <p>
+        TU Darmstadt strives to make the PEARL Robot Hub accessible in line with Directive (EU) 2016/2102 and the German
+        federal and state equality laws. The standard is the Web Content Accessibility Guidelines (WCAG) 2.1, level AA.
+      </p>
+      <h2>Compliance status</h2>
+      <p>This application is partially compliant. Every function works with the keyboard; there is a skip link to the
+        content, visible focus outlines, labelled controls, sufficient contrast (at least 4.5:1) in the light and dark
+        design, and animations stop when the operating system asks for reduced motion.</p>
+      <h2>Content that is not accessible</h2>
+      <ul>
+        <li>
+          The 3D animation before sign-in is hidden from screen readers; what it shows is in the texts next to it. It
+          can be skipped with "Skip to sign-in" and switched off in the appearance settings.
+        </li>
+        <li>Bookings can be dragged in the calendar with the mouse; the same bookings can be made with the form, also by keyboard.</li>
+        <li>The charts on the statistics page do not yet have a complete text alternative.</li>
+        <li>
+          Very high transparency of the glass panels (adjustable under "Appearance") can reduce contrast; the default
+          meets the requirements.
+        </li>
+      </ul>
+      <h2>Preparation of this statement</h2>
+      <p>
+        Prepared on 28 October 2026 based on a self-assessment (code review, calculated contrast, keyboard use). A test
+        by people with disabilities is still to come.
+      </p>
+      <h2>Report a barrier</h2>
+      <p>If you come across a barrier, please contact:</p>
+      {contact}
+      <h2>Enforcement procedure</h2>
+      <p>If you do not receive a satisfactory answer to your report, you can turn to the (German-language)</p>
+      {ARBITRATION}
+    </>
+  )
+}
+
 function PrivacyDe({ contact, info }: { contact: ReactNode; info: LegalInfo | null }) {
   return (
     <>
@@ -189,10 +300,10 @@ function PrivacyDe({ contact, info }: { contact: ReactNode; info: LegalInfo | nu
         Ihres Browsers. Während einer TU-ID-Anmeldung setzt die Anwendung ein technisch notwendiges Cookie für höchstens
         10 Minuten. Es gibt keine Analyse- oder Werbe-Cookies und kein Tracking.
       </p>
-      <h2>Schriften</h2>
+      <h2>Keine externen Inhalte</h2>
       <p>
-        Die Schriftarten werden derzeit von Google Fonts (Google Ireland Ltd.) geladen; dabei erhält Google Ihre
-        IP-Adresse.
+        Schriften, Grafiken und das 3D-Modell liefert dieser Server selbst aus; beim Aufruf der Seiten werden keine
+        Dienste Dritter kontaktiert.
       </p>
       <h2>Rechtsgrundlage und Speicherdauer</h2>
       <p>
@@ -206,6 +317,12 @@ function PrivacyDe({ contact, info }: { contact: ReactNode; info: LegalInfo | nu
         (Art. 15–21 DSGVO). Wenden Sie sich dazu an die oben genannte Kontaktperson. Beschwerden richten Sie an den
         Hessischen Beauftragten für Datenschutz und Informationsfreiheit, Postfach 3163, 65021 Wiesbaden.
       </p>
+      <p>
+        Eine Kopie aller über Sie gespeicherten Daten können Sie nach der Anmeldung selbst herunterladen. Auf Ihren
+        Wunsch löscht ein Administrator Ihr Konto: Name, E-Mail und Zugang werden entfernt, künftige Buchungen
+        storniert; vergangene Buchungen, Meldungen und Protokolle bleiben ohne Namen als Laborunterlagen erhalten.
+      </p>
+      <MyDataButton label="Meine Daten herunterladen" />
       <p>
         Allgemeine Datenschutzerklärung der TU Darmstadt:{' '}
         <a href="https://www.tu-darmstadt.de/datenschutzerklaerung" target="_blank" rel="noreferrer">
@@ -267,8 +384,11 @@ function PrivacyEn({ contact, info }: { contact: ReactNode; info: LegalInfo | nu
         storage. During a TU-ID sign-in the application sets one technically necessary cookie for at most 10 minutes.
         There are no analytics or advertising cookies and no tracking.
       </p>
-      <h2>Fonts</h2>
-      <p>The fonts are currently loaded from Google Fonts (Google Ireland Ltd.), which receives your IP address.</p>
+      <h2>No outside content</h2>
+      <p>
+        Fonts, graphics and the 3D model are delivered by this server itself; opening the pages contacts no third
+        party.
+      </p>
       <h2>Legal basis and retention</h2>
       <p>
         Processing serves the university's tasks in research and teaching (Art. 6(1)(e) GDPR with § 3 HDSIG). Accounts
@@ -281,6 +401,12 @@ function PrivacyEn({ contact, info }: { contact: ReactNode; info: LegalInfo | nu
         GDPR); contact the person named above. Complaints go to the Hessian Commissioner for Data Protection and Freedom
         of Information, Postfach 3163, 65021 Wiesbaden.
       </p>
+      <p>
+        Once signed in you can download a copy of everything stored about you yourself. On request an administrator
+        erases your account: name, e-mail and sign-in are removed, future bookings cancelled; past bookings, reports and
+        logs stay as lab records without your name.
+      </p>
+      <MyDataButton label="Download my data" />
       <p>
         TU Darmstadt's general privacy notice (German):{' '}
         <a href="https://www.tu-darmstadt.de/datenschutzerklaerung" target="_blank" rel="noreferrer">

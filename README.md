@@ -81,6 +81,14 @@ It reports every 30 s using only the Python standard library. `--ping <controlle
 
 The sign-in bar shows the Athene head from TU Darmstadt's official logo (`frontend/public/tu-logo.svg`, taken from tu-darmstadt.de). Its use must be cleared with TU before going live.
 
+### Legal pages, cookies, accessibility
+
+`/impressum`, `/datenschutz` and `/barrierefreiheit` are public (no sign-in). Set the lab's contact with `ROBOTS_LEGAL_CONTACT_NAME`, `_EMAIL` and `_ADDRESS`; have TU's data protection officer review the privacy text before going live.
+
+No cookie banner is needed: the app stores only what it needs to work (sign-in token, chosen language and appearance, a 10-minute cookie during TU-ID sign-in), which § 25 TDDDG exempts from consent. Adding analytics, tracking or outside content (e.g. fonts, maps or videos from other servers) would require a consent prompt and a privacy text update. Fonts are therefore bundled (`@fontsource`), not loaded from Google.
+
+Admins can erase a person on the Users page (name, e-mail, sign-in removed; future bookings cancelled; past records kept without the name); everyone can download their own data on the privacy page.
+
 ### Welcome animation assets
 
 - `frontend/public/models/fr3.glb`: the Franka Research 3, converted from Franka's official meshes ([franka_description](https://github.com/frankaemika/franka_description), Apache-2.0; license and notice next to it). The arm's kinematics in `frontend/src/intro/fr3.ts` come from the same package. To rebuild: download the package, then `node tools/convert_franka.mjs <path to franka_description>`. The mesh shows Franka's brand marking; whether we may show it publicly is worth confirming.

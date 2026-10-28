@@ -1,8 +1,8 @@
 from fastapi import APIRouter, HTTPException, status
-from sqlalchemy import select
+from sqlalchemy import delete, select, update
 
 from ..auth import DB, AdminUser, CurrentUser, hash_password
-from ..models import AuthSource, User
+from ..models import AuthSource, Reservation, Robot, Role, Ticket, User, utcnow
 from ..schemas import UserCreate, UserOut, UserUpdate
 
 router = APIRouter(prefix="/users", tags=["users"])
@@ -42,5 +42,33 @@ def update_user(user_id: int, data: UserUpdate, admin: AdminUser, db: DB):
         user.password_hash = hash_password(changes.pop("password"))
     for key, value in changes.items():
         setattr(user, key, value)
+    db.commit()
+    return user
+
+
+@router.post("/{user_id}/erase", response_model=UserOut)
+def erase_user(user_id: int, admin: AdminUser, db: DB):
+    """Right to erasure (Art. 17 GDPR): remove the person, keep the lab's records.
+
+    Name, username, e-mail and password are removed and the account is closed for good; future reservations are
+    cancelled, responsibilities and ticket assignments released. Past reservations, reports and logs stay as lab
+    records under "[deleted #id]". Text the person wrote into them stays as written.
+    """
+    user = db.get(User, user_id)
+    if user is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "User not found")
+    if user.id == admin.id:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "You cannot erase yourself")
+    label = f"[deleted #{user.id}]"
+    user.username = label
+    user.display_name = label
+    user.email = None
+    user.password_hash = None
+    user.role = Role.member
+    user.auth_source = AuthSource.local  # never matched by a later LDAP or TU-ID sign-in
+    user.is_active = False
+    db.execute(delete(Reservation).where(Reservation.user_id == user.id, Reservation.start > utcnow()))
+    db.execute(update(Robot).where(Robot.responsible_user_id == user.id).values(responsible_user_id=None))
+    db.execute(update(Ticket).where(Ticket.assignee_id == user.id).values(assignee_id=None))
     db.commit()
     return user

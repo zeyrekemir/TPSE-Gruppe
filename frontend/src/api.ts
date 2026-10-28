@@ -231,6 +231,16 @@ export const api = {
     request<User>('PATCH', '/auth/me', data),
 
   users: () => request<User[]>('GET', '/users'),
+  /** Right to erasure: removes the person, keeps the lab's records under "[deleted #id]". */
+  eraseUser: (id: number) => request<User>('POST', `/users/${id}/erase`),
+  /** Right of access: everything stored about the signed-in person, saved as a JSON file. */
+  async downloadMyData() {
+    const data = await request<unknown>('GET', '/auth/me/export')
+    const url = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }))
+    const a = Object.assign(document.createElement('a'), { href: url, download: 'pearl-robot-hub-my-data.json' })
+    a.click()
+    URL.revokeObjectURL(url)
+  },
   createUser: (data: { username: string; display_name: string; email?: string; password: string; role: Role }) =>
     request<User>('POST', '/users', data),
   updateUser: (id: number, data: Partial<User> & { password?: string }) =>
