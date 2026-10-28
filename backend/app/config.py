@@ -11,9 +11,11 @@ LAB_TZ = ZoneInfo("Europe/Berlin")
 class Settings(BaseSettings):
     """Application settings, read from environment variables (prefix ROBOTS_) or a .env file."""
 
-    # backend/.env is found wherever the server is started from; a .env in the working directory wins.
+    # Development settings come from backend/.env, wherever the server is started from. The .env in the
+    # repository root is Docker Compose's (it reaches the container as environment variables) and is not read
+    # here, so a Docker setup on the same machine cannot switch the development server's settings.
     model_config = SettingsConfigDict(
-        env_prefix="ROBOTS_", env_file=(Path(__file__).resolve().parent.parent / ".env", ".env"), extra="ignore"
+        env_prefix="ROBOTS_", env_file=Path(__file__).resolve().parent.parent / ".env", extra="ignore"
     )
 
     # Development default: SQLite file next to the backend folder, independent of the working directory.
