@@ -23,7 +23,7 @@ import json
 import secrets
 import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
-from urllib.parse import parse_qs, urlencode, urlparse
+from urllib.parse import parse_qs, unquote, urlencode, urlparse
 
 import jwt
 from cryptography.hazmat.primitives.asymmetric import rsa
@@ -104,6 +104,11 @@ class Handler(BaseHTTPRequestHandler):
             return self._send(404, "not found", "text/plain")
         length = int(self.headers.get("Content-Length", 0))
         form = {k: v[0] for k, v in parse_qs(self.rfile.read(length).decode()).items()}
+        # client_secret_basic (the OIDC default, as TU-ID uses): id and secret in an HTTP Basic header.
+        basic = self.headers.get("Authorization", "")
+        if basic.startswith("Basic "):
+            user, _, secret = base64.b64decode(basic[6:]).decode().partition(":")
+            form |= {"client_id": unquote(user), "client_secret": unquote(secret)}
         grant = CODES.pop(form.get("code", ""), None)
         if (
             grant is None

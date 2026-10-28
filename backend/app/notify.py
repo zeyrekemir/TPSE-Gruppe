@@ -64,6 +64,13 @@ def send(message: Message, settings: Settings | None = None) -> None:
             log.exception("Posting to Discord failed: %s", subject)
 
 
+def smtp_connection(settings: Settings) -> smtplib.SMTP:
+    """Plain SMTP (STARTTLS follows) or, with ROBOTS_SMTP_SSL, TLS from the start (port 465)."""
+    if settings.smtp_ssl:
+        return smtplib.SMTP_SSL(settings.smtp_host, settings.smtp_port, timeout=15)
+    return smtplib.SMTP(settings.smtp_host, settings.smtp_port, timeout=15)
+
+
 def _send_email(settings: Settings, recipients: list[str], subject: str, text: str) -> None:
     mail = EmailMessage()
     mail["Subject"] = f"[PEARL Robot Hub] {subject}"
@@ -71,12 +78,13 @@ def _send_email(settings: Settings, recipients: list[str], subject: str, text: s
     mail["To"] = settings.smtp_from
     mail["Bcc"] = ", ".join(recipients)
     mail.set_content(text)
-    with smtplib.SMTP(settings.smtp_host, settings.smtp_port, timeout=15) as smtp:
-        if settings.smtp_starttls:
+    with smtp_connection(settings) as smtp:
+        if settings.smtp_starttls and not settings.smtp_ssl:
             smtp.starttls()
         if settings.smtp_user:
             smtp.login(settings.smtp_user, settings.smtp_password or "")
-        smtp.send_message(mail)
+        # Deliver to the recipients only: by default smtplib also sends to the To address (the hub itself).
+        smtp.send_message(mail, to_addrs=recipients)
 
 
 def _send_discord(settings: Settings, subject: str, text: str) -> None:

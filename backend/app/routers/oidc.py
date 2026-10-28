@@ -12,7 +12,7 @@ import time
 from datetime import UTC, datetime, timedelta
 from functools import lru_cache
 from typing import Annotated
-from urllib.parse import urlencode
+from urllib.parse import quote, urlencode
 
 import httpx
 import jwt
@@ -140,19 +140,21 @@ def oidc_callback(
         return _fail(settings, "state")
 
     meta = discovery(settings)
+    form = {
+        "grant_type": "authorization_code",
+        "code": code,
+        "redirect_uri": callback_url(settings),
+        "code_verifier": saved["verifier"],
+    }
+    auth = None
+    if settings.oidc_token_auth == "client_secret_post":
+        form |= {"client_id": settings.oidc_client_id, "client_secret": settings.oidc_client_secret or ""}
+    else:
+        # client_secret_basic, the OpenID Connect default (e.g. TU-ID's Shibboleth IdP): HTTP Basic with
+        # form-urlencoded id and secret (RFC 6749, 2.3.1).
+        auth = (quote(settings.oidc_client_id or "", safe=""), quote(settings.oidc_client_secret or "", safe=""))
     try:
-        token_response = httpx.post(
-            meta["token_endpoint"],
-            data={
-                "grant_type": "authorization_code",
-                "code": code,
-                "redirect_uri": callback_url(settings),
-                "client_id": settings.oidc_client_id,
-                "client_secret": settings.oidc_client_secret or "",
-                "code_verifier": saved["verifier"],
-            },
-            timeout=10,
-        )
+        token_response = httpx.post(meta["token_endpoint"], data=form, auth=auth, timeout=10)
         token_response.raise_for_status()
         id_token = token_response.json()["id_token"]
         key = _jwks_client(meta["jwks_uri"]).get_signing_key_from_jwt(id_token)
@@ -190,9 +192,13 @@ def upsert_oidc_user(db: Session, claims: dict, settings: Settings) -> User | No
         db.add(user)
     user.display_name = claims.get("name") or user.display_name
     user.email = claims.get("email") or user.email
-    if settings.oidc_admin_group:
+    if username.lower() in settings.oidc_admin_user_list:
+        # Named admins (TU-ID sends no groups): always admin, never demoted by the group rule below.
+        user.role = Role.admin
+    elif settings.oidc_admin_group:
         groups = claims.get(settings.oidc_groups_claim) or []
         user.role = Role.admin if settings.oidc_admin_group in groups else Role.member
+    # Otherwise the role stays what an admin set on the Users page (new users start as members).
     db.commit()
     db.refresh(user)
     return user

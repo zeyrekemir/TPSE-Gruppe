@@ -42,8 +42,8 @@ def provider(monkeypatch):
 
     state = {"claims": {}, "token_requests": []}
 
-    def fake_post(url, data, timeout):
-        state["token_requests"].append(data)
+    def fake_post(url, data, timeout, auth=None):
+        state["token_requests"].append(data | {"_auth": auth})
         claims = {"iss": ISSUER, "aud": CLIENT_ID, "exp": int(time.time()) + 300, "iat": int(time.time())} | state["claims"]
         token = jwt.encode(claims, private_key, algorithm="RS256")
         return SimpleNamespace(raise_for_status=lambda: None, json=lambda: {"id_token": token})
@@ -77,6 +77,41 @@ def test_unreachable_provider_returns_to_login_with_reason(client, provider, mon
     r = client.get("/api/auth/oidc/login", follow_redirects=False)
     assert r.status_code == 307
     assert r.headers["location"] == "http://app.test/#sso_error=unreachable"
+
+
+def test_token_request_uses_basic_auth_by_default(client, provider, monkeypatch):
+    """TU-ID registers clients for client_secret_basic: the secret goes in the header, not the form."""
+    params = start_login(client)
+    provider["claims"] = {"sub": "u-9", "nonce": params["nonce"], "preferred_username": "ab12cdef"}
+    finish_login(client, params)
+    sent = provider["token_requests"][-1]
+    assert sent["_auth"] == (CLIENT_ID, "secret") and "client_secret" not in sent
+
+    monkeypatch.setattr(get_settings(), "oidc_token_auth", "client_secret_post")
+    params = start_login(client)
+    provider["claims"]["nonce"] = params["nonce"]
+    finish_login(client, params)
+    sent = provider["token_requests"][-1]
+    assert sent["_auth"] is None and sent["client_secret"] == "secret"
+
+
+def test_named_admins_without_groups(client, provider, monkeypatch, admin):
+    """TU-ID sends no groups: ROBOTS_OIDC_ADMIN_USERS makes named TU-IDs admins, others keep their role."""
+    monkeypatch.setattr(get_settings(), "oidc_admin_users", "AB12cdef, zz99zzzz")
+    monkeypatch.setattr(get_settings(), "oidc_admin_group", None)  # as with TU-ID: no groups claim
+    for username, expected in [("ab12cdef", "admin"), ("xy34ghij", "member")]:
+        params = start_login(client)
+        provider["claims"] = {"sub": username, "nonce": params["nonce"], "preferred_username": username}
+        token = finish_login(client, params).split("#token=")[1]
+        me = client.get("/api/auth/me", headers={"Authorization": f"Bearer {token}"}).json()
+        assert me["role"] == expected, username
+    # A member promoted on the Users page stays admin at the next TU-ID sign-in.
+    xy = next(u for u in client.get("/api/users", headers=admin).json() if u["username"] == "xy34ghij")
+    client.patch(f"/api/users/{xy['id']}", headers=admin, json={"role": "admin"})
+    params = start_login(client)
+    provider["claims"] = {"sub": "xy34ghij", "nonce": params["nonce"], "preferred_username": "xy34ghij"}
+    token = finish_login(client, params).split("#token=")[1]
+    assert client.get("/api/auth/me", headers={"Authorization": f"Bearer {token}"}).json()["role"] == "admin"
 
 
 def test_config_reports_sso(client, provider):

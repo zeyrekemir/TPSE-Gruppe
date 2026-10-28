@@ -107,11 +107,21 @@ Dev helper: `http://localhost:5173/?introAt=2.5` freezes the intro at 2.5 s to i
 ## Deployment (e.g. Proxmox VM or LXC with Docker)
 
 ```bash
-cp .env.example .env    # fill in passwords and the secret key
+cp .env.example .env    # fill in: passwords, secret key, public URL, TU-ID / LDAP / mail / Discord values
 docker compose up -d --build
 ```
 
-The app is served on port `8080` (`HTTP_PORT`). Put it behind the lab's reverse proxy for HTTPS.
+The app is served on port `8080` (`HTTP_PORT`). Put it behind the lab's reverse proxy for HTTPS. Every `ROBOTS_*` line in `.env` reaches the backend.
+
+Then check every connection with the real values (nothing is sent or changed unless asked):
+
+```bash
+docker compose exec backend python -m app.check_setup
+docker compose exec backend python -m app.check_setup --ldap-user <tu-id> --mail-to <your address> --discord-test
+python tools/smoke_test.py --url https://<hub address> --user admin --password <first admin password>
+```
+
+`check_setup` tests the security settings, the database, the TU-ID provider (and prints the redirect URI HRZ must have), LDAP (with `--ldap-user`, a real sign-in; the password is asked for), mail login (with `--mail-to`, one test mail) and the Discord webhook (with `--discord-test`, one test post). `smoke_test.py` then signs in and reads every part of the API.
 
 ## Configuration
 

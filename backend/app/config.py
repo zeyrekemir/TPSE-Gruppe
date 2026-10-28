@@ -45,6 +45,10 @@ class Settings(BaseSettings):
     oidc_username_claim: str = "preferred_username"
     oidc_groups_claim: str = "groups"
     oidc_admin_group: str | None = None
+    # Comma-separated usernames (TU-IDs) that always become admins; TU-ID itself sends no groups.
+    oidc_admin_users: str = ""
+    # How the hub authenticates at the token endpoint: client_secret_basic (OIDC default) or client_secret_post.
+    oidc_token_auth: str = "client_secret_basic"
     oidc_button_label: str = "TU-ID"
 
     # Notifications. Each channel is off while its settings are empty.
@@ -54,6 +58,8 @@ class Settings(BaseSettings):
     smtp_password: str | None = None
     smtp_from: str = "robots@localhost"
     smtp_starttls: bool = True
+    # Implicit TLS from the first byte (port 465, e.g. smtp.tu-darmstadt.de) instead of STARTTLS.
+    smtp_ssl: bool = False
     discord_webhook_url: str | None = None
     discord_language: str = "de"  # the Discord channel is shared, so it gets one language: de or en
     reminder_minutes: int = 30  # e-mail reminder before a reservation starts; 0 = off
@@ -64,6 +70,10 @@ class Settings(BaseSettings):
 
     # Live status: a robot counts as online if its last heartbeat is newer than this.
     live_timeout_seconds: int = 90
+
+    @property
+    def oidc_admin_user_list(self) -> list[str]:
+        return [u.strip().lower() for u in self.oidc_admin_users.split(",") if u.strip()]
 
 
 @lru_cache

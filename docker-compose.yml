@@ -16,27 +16,16 @@ services:
   backend:
     build: ./backend
     restart: unless-stopped
+    # Every ROBOTS_* setting in .env (TU-ID, LDAP, mail, Discord, booking rules, ...) reaches the backend.
+    env_file: .env
     environment:
       ROBOTS_DATABASE_URL: postgresql+psycopg://robots:${POSTGRES_PASSWORD}@db:5432/robots
+      # Required: the stack refuses to start without them.
       ROBOTS_SECRET_KEY: ${ROBOTS_SECRET_KEY:?set ROBOTS_SECRET_KEY in .env}
       ROBOTS_BOOTSTRAP_ADMIN_PASSWORD: ${ROBOTS_BOOTSTRAP_ADMIN_PASSWORD:?set ROBOTS_BOOTSTRAP_ADMIN_PASSWORD in .env}
-      ROBOTS_LDAP_URL: ${ROBOTS_LDAP_URL:-}
-      ROBOTS_LDAP_USER_DN_TEMPLATE: ${ROBOTS_LDAP_USER_DN_TEMPLATE:-uid={username},ou=people,dc=example,dc=org}
-      ROBOTS_LDAP_ADMIN_GROUP_DN: ${ROBOTS_LDAP_ADMIN_GROUP_DN:-}
+      # Browser and API share one origin behind nginx, so no cross-origin access is needed.
       ROBOTS_CORS_ORIGINS: '[]'
       ROBOTS_PUBLIC_URL: ${ROBOTS_PUBLIC_URL:-http://localhost:8080}
-      ROBOTS_OIDC_ISSUER: ${ROBOTS_OIDC_ISSUER:-}
-      ROBOTS_OIDC_CLIENT_ID: ${ROBOTS_OIDC_CLIENT_ID:-}
-      ROBOTS_OIDC_CLIENT_SECRET: ${ROBOTS_OIDC_CLIENT_SECRET:-}
-      ROBOTS_OIDC_ADMIN_GROUP: ${ROBOTS_OIDC_ADMIN_GROUP:-}
-      ROBOTS_SMTP_HOST: ${ROBOTS_SMTP_HOST:-}
-      ROBOTS_SMTP_PORT: ${ROBOTS_SMTP_PORT:-587}
-      ROBOTS_SMTP_USER: ${ROBOTS_SMTP_USER:-}
-      ROBOTS_SMTP_PASSWORD: ${ROBOTS_SMTP_PASSWORD:-}
-      ROBOTS_SMTP_FROM: ${ROBOTS_SMTP_FROM:-robots@localhost}
-      ROBOTS_DISCORD_WEBHOOK_URL: ${ROBOTS_DISCORD_WEBHOOK_URL:-}
-      ROBOTS_MAX_RESERVATION_HOURS: ${ROBOTS_MAX_RESERVATION_HOURS:-0}
-      ROBOTS_MAX_ADVANCE_DAYS: ${ROBOTS_MAX_ADVANCE_DAYS:-0}
     depends_on:
       db:
         condition: service_healthy
