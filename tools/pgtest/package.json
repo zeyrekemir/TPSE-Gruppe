@@ -1,0 +1,15 @@
+{
+  "name": "pgtest",
+  "private": true,
+  "description": "Throwaway PostgreSQL for running the backend tests without Docker",
+  "type": "module",
+  "scripts": { "start": "node start.mjs" },
+  "dependencies": {
+    "embedded-postgres": "17.10.0-beta.17"
+  },
+  "optionalDependencies": {
+    "@embedded-postgres/windows-x64": "17.10.0-beta.17",
+    "@embedded-postgres/linux-x64": "17.10.0-beta.17",
+    "@embedded-postgres/darwin-arm64": "17.10.0-beta.17"
+  }
+}

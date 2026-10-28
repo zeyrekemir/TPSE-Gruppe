@@ -1,0 +1,9 @@
+# Keep LF line endings in the repository and in checkouts: the code runs in Linux containers (Docker),
+# where CRLF breaks shell scripts and config files.
+* text=auto eol=lf
+
+*.glb binary
+*.hdr binary
+*.png binary
+*.jpg binary
+*.ico binary
