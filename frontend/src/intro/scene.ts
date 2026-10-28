@@ -356,54 +356,66 @@ export function runIntroScene(
       g.roundRect(22, 22, S - 44, S - 44, 48)
       g.stroke()
 
-      // Icon: on a round badge, kept small in the top third so the name can be large.
-      g.fillStyle = 'rgba(255,255,255,0.45)'
+      // Icon badge: well inside the frame (the frame runs at 22, the badge from 56 to 184).
+      const badge = { x: S / 2, y: 120, r: 64 }
+      g.fillStyle = 'rgba(255,255,255,0.6)'
       g.beginPath()
-      g.arc(S / 2, 34 + 256 * 0.62 / 2, 96, 0, Math.PI * 2)
+      g.arc(badge.x, badge.y, badge.r, 0, Math.PI * 2)
       g.fill()
+      g.strokeStyle = 'rgba(11,12,20,0.14)'
+      g.lineWidth = 3
+      g.stroke()
+      // Icons on a 100-unit grid, all with the same stroke, drawn 0.8 x 100 = 80 units wide in the badge.
       g.save()
-      g.translate(S / 2 - 256 * 0.62 / 2, 34)
-      g.scale(0.62, 0.62)
+      g.translate(badge.x - 40, badge.y - 40)
+      g.scale(0.8, 0.8)
       g.strokeStyle = g.fillStyle = ink
-      g.lineWidth = 22
+      g.lineWidth = 8
       g.lineCap = g.lineJoin = 'round'
+      // Filled dots are collected and drawn after the strokes (a new path for each would drop the lines).
+      const dots: [number, number, number][] = []
+      const dot = (x: number, y: number, s: number) => dots.push([x, y, s])
       g.beginPath()
       if (k === 0) {
-        for (const y of [80, 128, 176]) {
-          g.moveTo(96, y)
-          g.lineTo(188, y)
-          g.moveTo(66, y)
-          g.lineTo(66, y)
+        // Inventory: a list.
+        for (const y of [24, 50, 76]) {
+          dot(18, y, 12)
+          g.moveTo(38, y)
+          g.lineTo(86, y)
         }
       } else if (k === 1) {
-        g.moveTo(48, 132)
-        g.lineTo(92, 132)
-        g.lineTo(112, 76)
-        g.lineTo(146, 184)
-        g.lineTo(166, 132)
-        g.lineTo(208, 132)
+        // Live status: a heartbeat line with the live dot at its end.
+        g.moveTo(6, 54)
+        g.lineTo(28, 54)
+        g.lineTo(40, 24)
+        g.lineTo(56, 80)
+        g.lineTo(68, 54)
+        g.lineTo(82, 54)
+        dot(90, 54, 12)
       } else if (k === 2) {
-        g.roundRect(60, 66, 136, 128, 16)
-        g.moveTo(60, 106)
-        g.lineTo(196, 106)
-        g.moveTo(96, 50)
-        g.lineTo(96, 76)
-        g.moveTo(160, 50)
-        g.lineTo(160, 76)
-        g.moveTo(100, 146)
-        g.lineTo(100, 146)
-        g.moveTo(156, 146)
-        g.lineTo(156, 146)
+        // Booking: a calendar sheet with rings and a grid of days.
+        g.roundRect(10, 18, 80, 72, 12)
+        g.moveTo(10, 40)
+        g.lineTo(90, 40)
+        g.moveTo(32, 8)
+        g.lineTo(32, 26)
+        g.moveTo(68, 8)
+        g.lineTo(68, 26)
+        for (const y of [56, 74]) for (const x of [30, 50, 70]) dot(x, y, 9)
       } else {
-        g.arc(150, 104, 40, Math.PI * 0.15, Math.PI * 1.85)
-        g.moveTo(122, 132)
-        g.lineTo(66, 188)
+        // Maintenance: a wrench.
+        g.arc(64, 36, 22, Math.PI * 0.05, Math.PI * 1.45)
+        g.moveTo(49, 52)
+        g.lineTo(16, 85)
       }
       g.stroke()
+      g.beginPath()
+      for (const [x, y, s] of dots) g.roundRect(x - s / 2, y - s / 2, s, s, s / 3)
+      g.fill()
       g.restore()
 
-      // Name: as large as fits the lower two thirds, on one, two or three lines.
-      const { lines, size } = fitLabel(label, S - 64, 300, (text, px) => {
+      // Name: as large as fits the area below the badge (200..470), on one, two or three lines.
+      const { lines, size } = fitLabel(label, S - 96, 250, (text, px) => {
         g.font = font(px)
         return g.measureText(text).width
       })
@@ -416,7 +428,7 @@ export function runIntroScene(
       g.shadowBlur = 0
       g.shadowOffsetY = 2.5
       const lineHeight = size * 1.12
-      const centre = 350
+      const centre = 336
       lines.forEach((line, i) => g.fillText(line, S / 2, centre + (i - (lines.length - 1) / 2) * lineHeight))
       g.shadowColor = 'transparent'
     }
