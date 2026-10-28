@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react'
 import i18n from './i18n'
 import { api, getToken, setToken, type User } from './api'
+import { sound } from './sound'
 
 interface AuthState {
   user: User | null
@@ -52,6 +53,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = useCallback(async (username: string, password: string) => {
     await api.login(username, password)
     applyUser(await api.me())
+    sound.success()
   }, [])
 
   const logout = useCallback(() => {

@@ -5,6 +5,7 @@ import { api, type Stats } from '../api'
 import { useAppearance } from '../appearance'
 import { ErrorBox } from '../ui'
 import { useLoad } from '../util'
+import { Wave } from '../Wave'
 
 const PERIODS = [7, 30, 90, 365]
 
@@ -230,7 +231,9 @@ export default function StatsPage() {
       <header className="hero">
         <div>
           <p className="eyebrow">{t('app.title')}</p>
-          <h1>{t('nav.stats')}</h1>
+          <h1>
+          <Wave text={t('nav.stats')} />
+        </h1>
         </div>
         <div className="segmented" role="group" aria-label={t('stats.period')}>
           {PERIODS.map((p) => (

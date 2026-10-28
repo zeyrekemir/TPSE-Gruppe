@@ -8,7 +8,7 @@ const en = {
     save: 'Save', cancel: 'Cancel', delete: 'Delete', edit: 'Edit', add: 'Add', loading: 'Loading…',
     none: '—', confirmDelete: 'Really delete?', all: 'All', name: 'Name', actions: 'Actions',
   },
-  login: { tagline: 'Every robot in the lab, one place: who has it, what state it is in, what was tried.', sso: 'Sign in with {{label}}', tuidHeading: 'Sign in with {{label}}:', ssoNotConfigured: 'Available once the lab has registered the app with TU single sign-on.', or: 'or with username', ssoError: 'Single sign-on failed ({{reason}}). Please try again.', ssoUnreachable: 'The {{label}} sign-in server is not reachable right now. Please try again later or sign in with your username.', title: 'Sign in', username: 'Username', password: 'Password', submit: 'Sign in', failed: 'Wrong username or password', tooMany: 'Too many wrong passwords for this account. Please wait a few minutes and try again.' },
+  login: { tagline: 'Every robot in the lab, one place: who has it, what state it is in, what was tried.', sso: 'Sign in with {{label}}', tuidHeading: 'Sign in with {{label}}:', ssoNotConfigured: 'Available once the lab has registered the app with TU single sign-on.', or: 'or with username', ssoError: 'Single sign-on failed ({{reason}}). Please try again.', ssoUnreachable: 'The {{label}} sign-in server is not reachable right now. Please try again later or sign in with your username.', title: 'Sign in', username: 'Username', password: 'Password', submit: 'Sign in', showPassword: 'Show password', hidePassword: 'Hide password', failed: 'Wrong username or password', tooMany: 'Too many wrong passwords for this account. Please wait a few minutes and try again.' },
   status: {
     available: 'Available', reserved: 'Reserved', maintenance: 'In maintenance', defect: 'Defect', retired: 'Retired',
   },
@@ -61,10 +61,12 @@ const en = {
     f3: { title: 'Booking without clashes', text: 'Drag a slot in the calendar. If it is taken, the hub suggests the next free one.' },
     f4: { title: 'Maintenance & logs', text: 'Report faults, follow their history, document every experiment.' },
     cta: 'Ready for the next experiment?', enter: 'Open the hub',
+    stage: 'Assembly stage {{n}} of 4',
+    ui: { nextFree: 'Next free', fault: 'Gripper does not close', fix: 'Finger pads replaced', run: 'Grasp test: 48 of 50' },
   },
   appearance: {
     title: 'Appearance', theme: 'Theme', light: 'Light', dark: 'Dark', opacity: 'Glass opacity', clear: 'Clear',
-    solid: 'Solid', blur: 'Blur', intro: 'Show welcome story before sign-in', motion: 'Animated background', replay: 'Watch welcome story', reset: 'Reset', skip: 'Click to skip',
+    solid: 'Solid', blur: 'Blur', intro: 'Show welcome story before sign-in', sound: 'Sound', motion: 'Animated headings', replay: 'Watch welcome story', reset: 'Reset', skip: 'Click to skip',
   },
   user: {
     new: 'New user', username: 'Username', displayName: 'Display name', email: 'E-mail', role: 'Role',
@@ -81,7 +83,7 @@ const de: Dict = {
     save: 'Speichern', cancel: 'Abbrechen', delete: 'Löschen', edit: 'Bearbeiten', add: 'Hinzufügen', loading: 'Lädt…',
     none: '—', confirmDelete: 'Wirklich löschen?', all: 'Alle', name: 'Name', actions: 'Aktionen',
   },
-  login: { tagline: 'Alle Roboter des Labs an einem Ort: wer ihn hat, in welchem Zustand er ist, was versucht wurde.', sso: 'Mit {{label}} anmelden', tuidHeading: 'Zum Login mit {{label}}:', ssoNotConfigured: 'Verfügbar, sobald das Lab die App für das TU-Single-Sign-on registriert hat.', or: 'oder mit Benutzername', ssoError: 'Anmeldung über SSO fehlgeschlagen ({{reason}}). Bitte erneut versuchen.', ssoUnreachable: 'Der {{label}}-Anmeldeserver ist gerade nicht erreichbar. Bitte später erneut versuchen oder mit Benutzername anmelden.', title: 'Anmelden', username: 'Benutzername', password: 'Passwort', submit: 'Anmelden', failed: 'Benutzername oder Passwort falsch', tooMany: 'Zu viele falsche Passwörter für dieses Konto. Bitte ein paar Minuten warten und erneut versuchen.' },
+  login: { tagline: 'Alle Roboter des Labs an einem Ort: wer ihn hat, in welchem Zustand er ist, was versucht wurde.', sso: 'Mit {{label}} anmelden', tuidHeading: 'Zum Login mit {{label}}:', ssoNotConfigured: 'Verfügbar, sobald das Lab die App für das TU-Single-Sign-on registriert hat.', or: 'oder mit Benutzername', ssoError: 'Anmeldung über SSO fehlgeschlagen ({{reason}}). Bitte erneut versuchen.', ssoUnreachable: 'Der {{label}}-Anmeldeserver ist gerade nicht erreichbar. Bitte später erneut versuchen oder mit Benutzername anmelden.', title: 'Anmelden', username: 'Benutzername', password: 'Passwort', submit: 'Anmelden', showPassword: 'Passwort anzeigen', hidePassword: 'Passwort verbergen', failed: 'Benutzername oder Passwort falsch', tooMany: 'Zu viele falsche Passwörter für dieses Konto. Bitte ein paar Minuten warten und erneut versuchen.' },
   status: {
     available: 'Verfügbar', reserved: 'Reserviert', maintenance: 'In Wartung', defect: 'Defekt', retired: 'Außer Betrieb',
   },
@@ -134,10 +136,12 @@ const de: Dict = {
     f3: { title: 'Buchen ohne Konflikte', text: 'Zeitraum im Kalender ziehen. Ist er belegt, schlägt der Hub die nächste freie Lücke vor.' },
     f4: { title: 'Wartung & Protokolle', text: 'Störungen melden, Verlauf verfolgen, jeden Versuch dokumentieren.' },
     cta: 'Bereit für den nächsten Versuch?', enter: 'Zum Hub',
+    stage: 'Montagestufe {{n}} von 4',
+    ui: { nextFree: 'Nächste Lücke', fault: 'Greifer schließt nicht', fix: 'Fingerpads getauscht', run: 'Greiftest: 48 von 50' },
   },
   appearance: {
     title: 'Darstellung', theme: 'Design', light: 'Hell', dark: 'Dunkel', opacity: 'Glas-Deckkraft', clear: 'Klar',
-    solid: 'Deckend', blur: 'Unschärfe', intro: 'Willkommens-Story vor der Anmeldung zeigen', motion: 'Bewegter Hintergrund', replay: 'Willkommens-Story ansehen', reset: 'Zurücksetzen', skip: 'Klicken zum Überspringen',
+    solid: 'Deckend', blur: 'Unschärfe', intro: 'Willkommens-Story vor der Anmeldung zeigen', sound: 'Ton', motion: 'Bewegte Überschriften', replay: 'Willkommens-Story ansehen', reset: 'Zurücksetzen', skip: 'Klicken zum Überspringen',
   },
   user: {
     new: 'Neuer Nutzer', username: 'Benutzername', displayName: 'Anzeigename', email: 'E-Mail', role: 'Rolle',

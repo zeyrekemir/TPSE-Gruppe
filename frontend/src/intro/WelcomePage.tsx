@@ -1,6 +1,11 @@
 import { useEffect, useRef, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useAppearance } from '../appearance'
+import { SoundOffIcon, SoundOnIcon } from '../icons'
 import { LogoMark } from '../Logo'
+import { sound } from '../sound'
+import { Wave } from '../Wave'
+import { FeaturePreview } from './FeaturePreview'
 import { BEATS, beatOpacity, clamp01, sceneTimeAt, type Beat } from './timeline'
 
 /*
@@ -42,13 +47,12 @@ function measureFrameInterval(frames = 12): Promise<number> {
 
 export default function WelcomePage({ children }: { children: ReactNode }) {
   const { t } = useTranslation()
+  const { appearance, update } = useAppearance()
   const stageRef = useRef<HTMLElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const beatRefs = useRef<Partial<Record<Beat, HTMLElement | null>>>({})
   const hintRef = useRef<HTMLElement>(null)
   const progress = useRef(0)
-  // Names printed on the 3D modules (read once: the scene is built once per visit).
-  const featureNames = useRef((['f1', 'f2', 'f3', 'f4'] as const).map((f) => t(`story.${f}.title`))).current
 
   useEffect(() => {
     // The story always starts at its beginning, not where the browser last left the scroll position.
@@ -75,6 +79,7 @@ export default function WelcomePage({ children }: { children: ReactNode }) {
         if (!el) continue
         const o = beatOpacity(p, range)
         el.style.opacity = String(o)
+        el.style.setProperty('--o', o.toFixed(3))
         el.style.visibility = o > 0.001 ? 'visible' : 'hidden'
         // Slide up as it comes in, keep drifting up as it leaves (the Apple "parallax caption" feel).
         const mid = (range[0] + range[1]) / 2
@@ -123,7 +128,7 @@ export default function WelcomePage({ children }: { children: ReactNode }) {
           freezeAt: debugFreeze(),
           frameBudgetMs,
           getTime: () => sceneTimeAt(progress.current),
-          labels: featureNames,
+          onLogo: () => sound.logo(),
         })
         scene.setActive(visible)
       })
@@ -139,7 +144,7 @@ export default function WelcomePage({ children }: { children: ReactNode }) {
       window.removeEventListener('resize', readScroll)
       scene?.stop()
     }
-  }, [featureNames]) // stable (kept in a ref), so the scene is still built only once
+  }, [])
 
   const beat = (name: Beat) => (el: HTMLElement | null) => {
     beatRefs.current[name] = el
@@ -161,23 +166,35 @@ export default function WelcomePage({ children }: { children: ReactNode }) {
           <div className="story-beat story-hero" ref={beat('hero')}>
             <p className="story-kicker">PEARL Lab · TU Darmstadt</p>
             <h1 className="story-title">
-              {t('story.title1')}
+              <Wave text={t('story.title1')} />
               <br />
-              <span className="grad-text">{t('story.title2')}</span>
+              <span className="grad-text">
+                <Wave text={t('story.title2')} />
+              </span>
             </h1>
           </div>
 
           {(['f1', 'f2', 'f3', 'f4'] as const).map((f, i) => (
             <div key={f} className={`story-beat story-feature ${i % 2 ? 'right' : 'left'}`} ref={beat(f)}>
-              <span className="story-index">0{i + 1}</span>
-              <h2>{t(`story.${f}.title`)}</h2>
-              <p>{t(`story.${f}.text`)}</p>
+              <span className="story-index" aria-hidden="true">
+                0{i + 1}
+              </span>
+              <div className="story-card">
+                <span className="story-step">
+                  {t('story.stage', { n: i + 1 })}
+                </span>
+                <h2>{t(`story.${f}.title`)}</h2>
+                <p>{t(`story.${f}.text`)}</p>
+                <FeaturePreview feature={f} />
+              </div>
             </div>
           ))}
 
           <div className="story-beat story-lockup" ref={beat('lockup')}>
             <LogoMark size={120} />
-            <span className="story-word">PEARL</span>
+            <span className="story-word">
+              <Wave text="PEARL" />
+            </span>
             <span className="story-sub">Robot Hub · Franka · xArm · Tiago</span>
           </div>
 
@@ -191,6 +208,20 @@ export default function WelcomePage({ children }: { children: ReactNode }) {
           </button>
           <button className="story-skip link" onClick={skip}>
             {t('story.skip')}
+          </button>
+          <button
+            className="story-sound icon-btn"
+            onClick={() => {
+              const on = !appearance.sound
+              update({ sound: on })
+              sound.setEnabled(on)
+              if (on) sound.unlock()
+            }}
+            aria-pressed={appearance.sound}
+            aria-label={t('appearance.sound')}
+            title={t('appearance.sound')}
+          >
+            {appearance.sound ? <SoundOnIcon /> : <SoundOffIcon />}
           </button>
         </div>
       </section>

@@ -4,7 +4,7 @@ import { useLocation } from 'react-router-dom'
  * App background: a blueprint drawing of the same robot arm as the 3D welcome story, over an engineering
  * dot grid. Its joints carry the coloured glows the glass panels blur (the "bubbles" are joint lights).
  * The arm takes a different pose per page and eases between them (CSS `rotate` transitions on the joint
- * groups), sways a little while the user is idle, and stands centred on the welcome page so the 3D arm
+ * groups), stands still in between, and stands centred on the welcome page so the 3D arm
  * can hand over to it at the end of the scroll story.
  */
 

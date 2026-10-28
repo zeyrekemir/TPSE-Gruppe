@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
+import { sound } from './sound'
 
 export type Theme = 'light' | 'dark'
 
@@ -10,8 +11,10 @@ export interface Appearance {
   blur: number
   /** Play the intro animation when the app opens. */
   intro: boolean
-  /** Slowly moving colour field behind the glass. Off = static background, cheapest to render. */
+  /** Gently waving headings (Wave.tsx). Off = still letters. */
   motion: boolean
+  /** Quiet interface sounds and the intro's logo sound (see sound.ts). */
+  sound: boolean
 }
 
 const STORAGE_KEY = 'robots.appearance'
@@ -22,6 +25,7 @@ const DEFAULT_APPEARANCE: Appearance = {
   blur: 16,
   intro: true,
   motion: true,
+  sound: true,
 }
 
 function load(): Appearance {
@@ -57,6 +61,7 @@ export function AppearanceProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     applyAppearance(appearance)
+    sound.setEnabled(appearance.sound)
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(appearance))
     } catch {

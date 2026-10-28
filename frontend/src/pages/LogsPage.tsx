@@ -4,6 +4,7 @@ import { api } from '../api'
 import { LogForm, LogTable } from '../components'
 import { ErrorBox } from '../ui'
 import { useLoad } from '../util'
+import { Wave } from '../Wave'
 
 export default function LogsPage() {
   const { t } = useTranslation()
@@ -14,7 +15,9 @@ export default function LogsPage() {
   return (
     <section>
       <div className="page-head">
-        <h1>{t('nav.logs')}</h1>
+        <h1>
+          <Wave text={t('nav.logs')} />
+        </h1>
         <select value={robotId} onChange={(e) => setRobotId(e.target.value ? Number(e.target.value) : '')}>
           <option value="">{t('common.all')}</option>
           {robots.data?.map((r) => (

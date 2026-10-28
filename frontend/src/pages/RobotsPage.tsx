@@ -7,6 +7,7 @@ import { ArmIcon, PinIcon, PlusIcon, QrIcon, UserIcon } from '../icons'
 import { ErrorBox, LiveBadge, StatusBadge } from '../ui'
 import { useInterval, useLoad } from '../util'
 import RobotForm from './RobotForm'
+import { Wave } from '../Wave'
 
 const STAT_ORDER: Availability[] = ['available', 'reserved', 'maintenance', 'defect']
 
@@ -36,7 +37,9 @@ export default function RobotsPage() {
       <header className="hero">
         <div>
           <p className="eyebrow">{t('app.title')}</p>
-          <h1>{t('nav.robots')}</h1>
+          <h1>
+          <Wave text={t('nav.robots')} />
+        </h1>
         </div>
         {user?.role === 'admin' && !creating && (
           <div className="actions">

@@ -15,6 +15,7 @@ import LogsPage from './pages/LogsPage'
 import UsersPage from './pages/UsersPage'
 import LabelsPage from './pages/LabelsPage'
 import LegalPage, { LegalLinks } from './pages/LegalPage'
+import { sound } from './sound'
 
 // Heavy pages are loaded on demand.
 const CalendarPage = lazy(() => import('./pages/CalendarPage'))
@@ -52,24 +53,22 @@ function usePointerSheen() {
 }
 
 /**
- * The liquid background only flows while the user is idle. Any moving pixel behind the glass forces every
- * panel to be re-blurred each frame, so freezing it during scrolling, pointer movement and typing keeps
- * interaction at the display's full refresh rate (e.g. 120 Hz). It resumes where it stopped.
+ * Interface sounds: the first click or key press unlocks audio (browsers allow it only after a gesture),
+ * and buttons give a quiet tick.
  */
-function usePauseMotionWhileInteracting() {
+function useInterfaceSounds() {
   useEffect(() => {
-    const root = document.documentElement
-    let timer: ReturnType<typeof setTimeout> | undefined
-    const onActivity = () => {
-      root.classList.add('motion-paused')
-      clearTimeout(timer)
-      timer = setTimeout(() => root.classList.remove('motion-paused'), 1200)
+    const unlock = () => sound.unlock()
+    const tick = (e: MouseEvent) => {
+      if ((e.target as HTMLElement).closest?.('button, [role="button"], .segmented button')) sound.tick()
     }
-    const events = ['scroll', 'wheel', 'touchmove', 'pointermove', 'pointerdown', 'keydown'] as const
-    events.forEach((e) => window.addEventListener(e, onActivity, { passive: true, capture: true }))
+    window.addEventListener('pointerdown', unlock, { capture: true })
+    window.addEventListener('keydown', unlock, { capture: true })
+    document.addEventListener('click', tick)
     return () => {
-      clearTimeout(timer)
-      events.forEach((e) => window.removeEventListener(e, onActivity, { capture: true }))
+      window.removeEventListener('pointerdown', unlock, { capture: true })
+      window.removeEventListener('keydown', unlock, { capture: true })
+      document.removeEventListener('click', tick)
     }
   }, [])
 }
@@ -81,7 +80,7 @@ function Shell() {
   const navigate = useNavigate()
   const { pathname } = useLocation()
   usePointerSheen()
-  usePauseMotionWhileInteracting()
+  useInterfaceSounds()
 
   // Imprint and privacy notice are public: shown whether signed in or not.
   const legal = ({ '/impressum': 'imprint', '/datenschutz': 'privacy', '/barrierefreiheit': 'accessibility' } as const)[

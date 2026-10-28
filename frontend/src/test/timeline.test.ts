@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { BEATS, beatOpacity, closeUpWeight, FADE, featureTime, fitLabel, progressAt, SCENE_KEYS, sceneTimeAt, SHOW, TIMELINE } from '../intro/timeline'
+import { BEATS, beatOpacity, driveWindow, FADE, featureTime, LOGO_AT, logoReached, PARTS, partWindow, progressAt, SCENE_KEYS, sceneTimeAt, STAGES, TIMELINE } from '../intro/timeline'
 
 describe('scroll story timeline', () => {
   it('maps scroll progress to scene time through the keyframes', () => {
@@ -47,56 +47,55 @@ describe('scroll story timeline', () => {
     for (let p = 0; p <= 1; p += 0.01) expect(progressAt(sceneTimeAt(p))).toBeCloseTo(p, 6)
   })
 
-  it('shows each feature caption only after the arm has lifted its module, and while it shows it', () => {
+  it('shows each feature caption while its assembly stage puts its parts on', () => {
     const captions = [BEATS.f1, BEATS.f2, BEATS.f3, BEATS.f4]
     captions.forEach((range, k) => {
-      for (const phase of [SHOW.present + 0.03, SHOW.presentHold]) {
-        expect(beatOpacity(progressAt(featureTime(k, phase)), range), `feature ${k + 1}`).toBe(1)
+      for (const p of STAGES[k]) {
+        const [, seated] = partWindow(p)
+        expect(beatOpacity(progressAt(seated), range), `part ${PARTS[p]}`).toBe(1)
       }
-      // ...and not before the arm has picked the module up and lifted it.
-      expect(beatOpacity(progressAt(featureTime(k, SHOW.lift)), range)).toBe(0)
+      // ...and not before the stage has begun.
+      expect(beatOpacity(progressAt(featureTime(k, 0)), range)).toBe(0)
     })
-  })
-
-  it('moves the camera in on each module while it is presented, one at a time, and back out', () => {
-    for (let k = 0; k < 4; k++) {
-      expect(closeUpWeight(k, featureTime(k, SHOW.pick))).toBe(0)
-      expect(closeUpWeight(k, featureTime(k, SHOW.present))).toBe(1)
-      expect(closeUpWeight(k, featureTime(k, SHOW.presentHold))).toBe(1)
-      expect(closeUpWeight(k, featureTime(k, SHOW.place))).toBe(0)
-    }
-    // Smooth: no jumps between neighbouring frames, and never two close-ups at once.
-    let prev = 0
-    for (let t = 0; t <= TIMELINE.end; t += 0.002) {
-      const weights = [0, 1, 2, 3].map((k) => closeUpWeight(k, t))
-      expect(weights.filter((w) => w > 0).length).toBeLessThanOrEqual(1)
-      const w = Math.max(...weights)
-      expect(Math.abs(w - prev)).toBeLessThan(0.05)
-      prev = w
-    }
-    // The overview is back for the finale.
-    expect(closeUpWeight(3, TIMELINE.ignite)).toBe(0)
   })
 })
 
-describe('module label fitting', () => {
-  // Monospace stand-in for canvas measureText: each character is 0.6 em wide.
-  const measure = (text: string, px: number) => text.length * px * 0.6
-
-  it('keeps a short name on one line, as large as allowed', () => {
-    const { lines, size } = fitLabel('Live', 448, 300, measure)
-    expect(lines).toEqual(['Live'])
-    expect(size).toBe(150)
+describe('assembly order', () => {
+  it('puts every part on exactly once, one after the other, before the robot is complete', () => {
+    expect(STAGES.flat().sort((a, b) => a - b)).toEqual(PARTS.map((_, p) => p))
+    let prevSeated: number = TIMELINE.featuresStart
+    PARTS.forEach((_, p) => {
+      const [hooked, seated] = partWindow(p)
+      expect(hooked).toBeGreaterThanOrEqual(prevSeated)
+      expect(seated).toBeGreaterThan(hooked)
+      prevSeated = seated
+    })
+    expect(prevSeated).toBeLessThanOrEqual(TIMELINE.assembled)
   })
 
-  it('breaks a long name over lines so it can be drawn larger, and it always fits', () => {
-    for (const label of ['Inventory & status', 'Reservierungen mit Kalender', 'Wartung und Fehlermeldungen']) {
-      const { lines, size } = fitLabel(label, 448, 300, measure)
-      expect(lines.join(' ')).toBe(label)
-      for (const line of lines) expect(measure(line, size)).toBeLessThanOrEqual(448)
-      expect(lines.length * size * 1.05).toBeLessThanOrEqual(300)
-      expect(lines.length).toBeGreaterThan(1)
-      expect(size).toBeGreaterThan(fitLabel(label.replace(/ /g, '-'), 448, 300, measure).size)
+  it('builds the drive of each joint before the crane brings the housing over it', () => {
+    PARTS.forEach((_, p) => {
+      const [built, done] = driveWindow(p)
+      const [hooked] = partWindow(p)
+      expect(done).toBeGreaterThan(built)
+      expect(done).toBeLessThan(hooked)
+    })
+  })
+})
+
+describe('intro sound', () => {
+  it('plays once, exactly when the PEARL logo appears, and only going forward', () => {
+    let count = 0
+    let at = -1
+    for (let t = 0; t < TIMELINE.end; t += 0.01) {
+      if (logoReached(t, t + 0.01)) {
+        count++
+        at = t + 0.01
+      }
     }
+    expect(count).toBe(1)
+    expect(progressAt(at)).toBeCloseTo(BEATS.lockup[0], 2)
+    expect(logoReached(LOGO_AT + 1, LOGO_AT - 1)).toBe(false)
+    expect(logoReached(LOGO_AT, LOGO_AT)).toBe(false)
   })
 })

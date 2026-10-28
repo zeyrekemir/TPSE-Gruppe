@@ -5,6 +5,8 @@ import { useAuth } from '../auth'
 import { Logo } from '../Logo'
 import { ErrorBox } from '../ui'
 import { LegalLinks } from './LegalPage'
+import { Wave } from '../Wave'
+import { ArrowRightIcon, EyeIcon, EyeOffIcon, LockIcon, UserIcon } from '../icons'
 
 export default function LoginPage() {
   const { t } = useTranslation()
@@ -18,6 +20,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
 
   async function submit(e: FormEvent) {
     e.preventDefault()
@@ -53,8 +56,13 @@ export default function LoginPage() {
       </div>
       <form className="login-form glass-strong sheen" onSubmit={submit}>
         <Logo size={56} />
-        <h1>{t('login.title')}</h1>
-        <p className="muted">{t('app.title')}</p>
+        <h1>
+          <Wave text={t('login.title')} />
+        </h1>
+        <p className="login-kicker">
+          <span className="login-status" aria-hidden="true" />
+          {t('app.title')}
+        </p>
         {ssoError && (
           <ErrorBox
             message={
@@ -84,6 +92,10 @@ export default function LoginPage() {
                 <img src="/tu-logo.svg" alt="" onError={() => setLogoMissing(true)} />
               </span>
             )}
+            <span className="tuid-label" aria-hidden="true">
+              {config?.oidc_label ?? 'TU-ID'}
+            </span>
+            <ArrowRightIcon className="tuid-arrow" />
           </button>
           {!config?.oidc && (
             <span id="sso-hint" className="muted small">
@@ -94,21 +106,38 @@ export default function LoginPage() {
         <span className="divider">{t('login.or')}</span>
         <label>
           {t('login.username')}
-          <input value={username} onChange={(e) => setUsername(e.target.value)} autoComplete="username" autoFocus required />
+          <span className="field">
+            <UserIcon className="field-icon" />
+            <input value={username} onChange={(e) => setUsername(e.target.value)} autoComplete="username" autoFocus required />
+          </span>
         </label>
         <label>
           {t('login.password')}
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            autoComplete="current-password"
-            required
-          />
+          <span className="field">
+            <LockIcon className="field-icon" />
+            <input
+              type={showPassword ? 'text' : 'password'}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              autoComplete="current-password"
+              required
+            />
+            <button
+              type="button"
+              className="field-action"
+              onClick={() => setShowPassword((v) => !v)}
+              aria-pressed={showPassword}
+              aria-label={t(showPassword ? 'login.hidePassword' : 'login.showPassword')}
+              title={t(showPassword ? 'login.hidePassword' : 'login.showPassword')}
+            >
+              {showPassword ? <EyeOffIcon /> : <EyeIcon />}
+            </button>
+          </span>
         </label>
         <ErrorBox message={error} />
-        <button type="submit" disabled={busy}>
-          {t('login.submit')}
+        <button type="submit" className="login-submit" disabled={busy}>
+          <span>{t('login.submit')}</span>
+          <ArrowRightIcon />
         </button>
         <LegalLinks />
       </form>

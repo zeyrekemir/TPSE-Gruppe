@@ -4,6 +4,7 @@ import { api } from '../api'
 import { TicketForm, TicketItem } from '../components'
 import { ErrorBox } from '../ui'
 import { useLoad } from '../util'
+import { Wave } from '../Wave'
 
 export default function TicketsPage() {
   const { t } = useTranslation()
@@ -19,7 +20,9 @@ export default function TicketsPage() {
   return (
     <section>
       <div className="page-head">
-        <h1>{t('nav.tickets')}</h1>
+        <h1>
+          <Wave text={t('nav.tickets')} />
+        </h1>
         <div className="actions">
           <select value={robotId} onChange={(e) => setRobotId(e.target.value ? Number(e.target.value) : '')}>
             <option value="">{t('common.all')}</option>

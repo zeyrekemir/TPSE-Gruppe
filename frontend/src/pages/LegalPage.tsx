@@ -1,8 +1,9 @@
-import { useEffect, useState, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { api, type LegalInfo } from '../api'
 import { useAuth } from '../auth'
+import { ShieldIcon } from '../icons'
 
 /**
  * Imprint and privacy notice, public (no sign-in). The university's details are TU Darmstadt's official ones
@@ -19,18 +20,66 @@ export default function LegalPage({ kind }: { kind: 'imprint' | 'privacy' | 'acc
   }, [])
   const de = i18n.language !== 'en'
   const contact = <Contact info={info} de={de} />
+  const body = useRef<HTMLDivElement>(null)
+  const [sections, setSections] = useState<{ id: string; title: string }[]>([])
+  const [current, setCurrent] = useState('')
+
+  // A table of contents from the page's own section headings, with the one in view highlighted.
+  useEffect(() => {
+    const headings = [...(body.current?.querySelectorAll('h2') ?? [])]
+    headings.forEach((h, i) => (h.id = `s${i + 1}`))
+    setSections(headings.map((h) => ({ id: h.id, title: h.textContent ?? '' })))
+    // The current section is the last one whose heading has passed the upper third of the window.
+    const onScroll = () => {
+      const passed = headings.filter((h) => h.getBoundingClientRect().top < window.innerHeight * 0.3)
+      setCurrent(passed.length ? passed[passed.length - 1].id : (headings[0]?.id ?? ''))
+    }
+    onScroll()
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [kind, de, info])
+
+  const titles = {
+    imprint: de ? 'Impressum' : 'Imprint',
+    privacy: de ? 'Datenschutz' : 'Privacy',
+    accessibility: de ? 'Barrierefreiheit' : 'Accessibility',
+  }
 
   return (
     <div className="legal-page">
-      <article className="legal glass-strong">
-        <Link to={user ? '/robots' : '/'} className="legal-back">
-          {de ? '← Zurück' : '← Back'}
-        </Link>
-        {kind === 'imprint' && (de ? <ImprintDe contact={contact} /> : <ImprintEn contact={contact} />)}
-        {kind === 'privacy' && (de ? <PrivacyDe contact={contact} info={info} /> : <PrivacyEn contact={contact} info={info} />)}
-        {kind === 'accessibility' && (de ? <AccessibilityDe contact={contact} /> : <AccessibilityEn contact={contact} />)}
-        <LegalLinks />
-      </article>
+      <div className="legal-layout">
+        <aside className="legal-aside">
+          <Link to={user ? '/robots' : '/'} className="legal-back">
+            <span aria-hidden="true">←</span> {de ? 'Zurück' : 'Back'}
+          </Link>
+          {sections.length > 1 && (
+            <nav className="legal-toc glass" aria-label={de ? 'Inhalt' : 'Contents'}>
+              <span className="legal-toc-title">{de ? 'Inhalt' : 'Contents'}</span>
+              <ol>
+                {sections.map((sec) => (
+                  <li key={sec.id}>
+                    <a href={`#${sec.id}`} className={sec.id === current ? 'active' : undefined}>
+                      {sec.title}
+                    </a>
+                  </li>
+                ))}
+              </ol>
+            </nav>
+          )}
+        </aside>
+        <article className="legal glass-strong">
+          <p className="legal-kicker">
+            <ShieldIcon />
+            {de ? 'Rechtliches' : 'Legal'} · {titles[kind]} · PEARL Robot Hub
+          </p>
+          <div className="legal-body" ref={body}>
+            {kind === 'imprint' && (de ? <ImprintDe contact={contact} /> : <ImprintEn contact={contact} />)}
+            {kind === 'privacy' && (de ? <PrivacyDe contact={contact} info={info} /> : <PrivacyEn contact={contact} info={info} />)}
+            {kind === 'accessibility' && (de ? <AccessibilityDe contact={contact} /> : <AccessibilityEn contact={contact} />)}
+          </div>
+          <LegalLinks />
+        </article>
+      </div>
     </div>
   )
 }

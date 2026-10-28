@@ -1,82 +1,65 @@
 // Timeline of the welcome story, in "scene seconds". The 3D scene and the text overlay both read it,
-// so captions land exactly on what the arm is doing.
+// so captions land exactly on what is being built.
 //
-// Story: the arm stands next to a conveyor belt. For each of the four features a module rides in on the
-// belt; the arm picks it up, turns it towards the camera (the caption shows), and sets it on a display
-// pedestal. When all four stand on display, the joints light up and the logo appears.
+// Story: an empty assembly platform under an overhead crane. Joint by joint, the Franka Research 3 is built: first
+// the drive inside (motor, gears, bearing), filmed as close as a watch movement, then the crane lowers the housing
+// over it; four assembly stages bring the four features. The finished robot
+// then powers up, moves for the first time, and the logo appears.
 
 export const FEATURE_COUNT = 4
 
 export const TIMELINE = {
-  featuresStart: 1, // feature k runs from featuresStart + k to featuresStart + k + 1
-  ignite: 5.2, // all joint rings light up
-  flash: 5.5, // bloom peak: the logo lands
-  end: 6.6, // camera push-in done
-} as const
-
-/** Phases inside one feature segment (0..1 of that segment). */
-export const SHOW = {
-  pick: 0.22, // arm is down at the belt, module has arrived at the stop
-  grab: 0.27, // fingers closed, module travels with the hand from here
-  lift: 0.38,
-  present: 0.55, // module held up to the camera...
-  presentHold: 0.7, // ...until here
-  place: 0.85, // module above its pedestal
-  release: 0.88, // fingers open, module stays on the pedestal
+  featuresStart: 0.6, // assembly stage k runs from featuresStart + k to featuresStart + k + 1
+  assembled: 4.6, // the last part is in place
+  ignite: 4.9, // status lights and joint rings come on: the robot is alive
+  flash: 5.5, // the logo lands
+  end: 6.6, // first moves done, camera at rest
 } as const
 
 export const featureTime = (k: number, phase: number) => TIMELINE.featuresStart + k + phase
 
-const smooth = (x: number) => {
-  const c = Math.min(1, Math.max(0, x))
-  return c * c * (3 - 2 * c)
+/** The robot's parts in assembly order: names of the nodes in Franka's model (public/models/fr3.glb). */
+export const PARTS = ['link0', 'link1', 'link2', 'link3', 'link4', 'link5', 'link6', 'link7', 'hand'] as const
+/** Which parts each assembly stage (one per feature) puts on: base and shoulder, arm, forearm and wrist, flange and hand. */
+export const STAGES: number[][] = [[0, 1], [2, 3], [4, 5], [6, 7, 8]]
+
+/** Scene seconds given to part p: its drive is built first, then its housing is lowered over it. */
+function partSlot(p: number): [number, number] {
+  const k = STAGES.findIndex((stage) => stage.includes(p))
+  const stage = STAGES[k]
+  const slot = 0.84 / stage.length
+  return [featureTime(k, 0.02 + stage.indexOf(p) * slot), slot]
 }
 
-/** How far the camera has moved in on module k at scene time t: 0 (overview) .. 1 (close-up while presented). */
-export function closeUpWeight(k: number, t: number) {
-  const s = t - featureTime(k, 0)
-  if (s <= SHOW.grab || s >= SHOW.place) return 0
-  if (s < SHOW.present) return smooth((s - SHOW.grab) / (SHOW.present - SHOW.grab))
-  if (s <= SHOW.presentHold) return 1
-  return 1 - smooth((s - SHOW.presentHold) / (SHOW.place - SHOW.presentHold))
+/** Scene seconds in which the drive inside joint p (motor, gears, bearing) is put together, close up. */
+export function driveWindow(p: number): [number, number] {
+  const [start, slot] = partSlot(p)
+  return [start, start + slot * 0.4]
 }
 
-/**
- * Break a label into one to three lines and pick the largest font size (px) at which every line is at most
- * `maxWidth` wide and the block at most `maxHeight` tall. `measure(text, px)` returns the drawn width.
- */
-export function fitLabel(label: string, maxWidth: number, maxHeight: number, measure: (text: string, px: number) => number, maxSize = 150) {
-  const words = label.trim().split(/\s+/)
-  const probe = 100
-  let best = { lines: [label.trim()], size: 0 }
-  for (let n = 1; n <= Math.min(3, words.length); n++) {
-    for (const lines of splits(words, n)) {
-      const widest = Math.max(...lines.map((l) => measure(l, probe)))
-      const size = Math.floor(Math.min(maxSize, (probe * maxWidth) / widest, maxHeight / (n * 1.05)))
-      if (size > best.size) best = { lines, size }
-    }
-  }
-  return best
+/** Scene seconds in which part p's housing is lowered by the crane: [hooked on, seated]. */
+export function partWindow(p: number): [number, number] {
+  const [start, slot] = partSlot(p)
+  return [start + slot * 0.5, start + slot * 0.9]
 }
 
-/** Every way to split `words` into `n` non-empty consecutive lines. */
-function splits(words: string[], n: number): string[][] {
-  if (n === 1) return [[words.join(' ')]]
-  const out: string[][] = []
-  for (let i = 1; i <= words.length - n + 1; i++) {
-    for (const rest of splits(words.slice(i), n - 1)) out.push([words.slice(0, i).join(' '), ...rest])
-  }
-  return out
-}
+/** After a part seats: sparks and a ring of light at the joint for this long. */
+export const SEAT_GLOW = 0.3
+
+/** Scene time at which the PEARL logo and wordmark appear: the intro's one sound plays here. */
+export const LOGO_AT = TIMELINE.ignite + 0.2
+
+/** True when the story passes the logo moment going forward (scrolling back stays silent). */
+export const logoReached = (from: number, to: number) => from < LOGO_AT && LOGO_AT <= to
 
 // --- Scroll progress p (0..1 across the pinned section) -> scene time, and the text beats ---
 
-// [progress, scene seconds] keyframes; linear in between. Most of the scroll belongs to the four features.
+// [progress, scene seconds] keyframes; linear in between. Most of the scroll belongs to the four assembly stages.
 export const SCENE_KEYS: [number, number][] = [
   [0.0, 0],
-  [0.06, 0.55], // short intro: belt starts, first module rides in
-  [0.86, 5.0], // the four features, 0.2 of the scroll each
-  [1.0, TIMELINE.end], // finale: lights, logo, camera push
+  [0.05, TIMELINE.featuresStart], // short opening: the empty platform
+  [0.84, TIMELINE.assembled], // the four stages, about 0.2 of the scroll each
+  [1.0, TIMELINE.end], // the robot comes alive, logo
 ]
 
 export const clamp01 = (x: number) => Math.min(1, Math.max(0, x))
@@ -101,20 +84,19 @@ export function progressAt(t: number) {
 }
 
 // Text beats: [from, to] in progress. Each fades in/out over FADE at its edges.
-// A feature caption starts only after the arm has picked up and lifted its module (fully shown by the time the
-// module faces the camera), and goes once the module stands on its pedestal.
+// A feature caption shows while its stage's parts are being put on: from just after the stage's first part is
+// hooked on until its last part has seated.
 export const FADE = 0.03
-const caption = (k: number) =>
-  [progressAt(featureTime(k, SHOW.lift + 0.03)), progressAt(featureTime(k, SHOW.release + 0.02))] as const
+const caption = (k: number) => [progressAt(featureTime(k, 0.06)), progressAt(featureTime(k, 0.99))] as const
 
 export const BEATS = {
-  hero: [0, progressAt(0.8)],
+  hero: [0, progressAt(TIMELINE.featuresStart - 0.05)],
   f1: caption(0),
   f2: caption(1),
   f3: caption(2),
   f4: caption(3),
-  lockup: [progressAt(TIMELINE.ignite + 0.2), progressAt(6.25)],
-  cta: [progressAt(6.25), 1.01],
+  lockup: [progressAt(LOGO_AT), progressAt(6.1)],
+  cta: [progressAt(6.1), 1.01],
 } as const
 export type Beat = keyof typeof BEATS
 

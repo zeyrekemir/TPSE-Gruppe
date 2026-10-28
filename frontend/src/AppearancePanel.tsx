@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAppearance } from './appearance'
 import { MoonIcon, SlidersIcon, SunIcon } from './icons'
+import { sound } from './sound'
 
 /** Popover with theme, glass transparency/blur and intro settings. */
 export default function AppearancePanel({ onReplayIntro }: { onReplayIntro: () => void }) {
@@ -85,6 +86,22 @@ export default function AppearancePanel({ onReplayIntro }: { onReplayIntro: () =
           <label className="checkbox">
             <input type="checkbox" checked={appearance.intro} onChange={(e) => update({ intro: e.target.checked })} />
             {t('appearance.intro')}
+          </label>
+
+          <label className="checkbox">
+            <input
+              type="checkbox"
+              checked={appearance.sound}
+              onChange={(e) => {
+                update({ sound: e.target.checked })
+                sound.setEnabled(e.target.checked)
+                if (e.target.checked) {
+                  sound.unlock()
+                  sound.success()
+                }
+              }}
+            />
+            {t('appearance.sound')}
           </label>
 
           <div className="actions">

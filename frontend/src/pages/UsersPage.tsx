@@ -4,6 +4,7 @@ import { api, type Role } from '../api'
 import { useAuth } from '../auth'
 import { ErrorBox } from '../ui'
 import { useLoad } from '../util'
+import { Wave } from '../Wave'
 
 export default function UsersPage() {
   const { t } = useTranslation()
@@ -47,7 +48,9 @@ export default function UsersPage() {
 
   return (
     <section>
-      <h1>{t('nav.users')}</h1>
+      <h1>
+          <Wave text={t('nav.users')} />
+        </h1>
       <form className="card form-grid" onSubmit={create}>
         <h3 className="span-2">{t('user.new')}</h3>
         <label>

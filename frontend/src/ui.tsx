@@ -1,5 +1,7 @@
+import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { Availability, LiveStatus } from './api'
+import { sound } from './sound'
 
 export function StatusBadge({ status }: { status: Availability }) {
   const { t } = useTranslation()
@@ -7,7 +9,15 @@ export function StatusBadge({ status }: { status: Availability }) {
 }
 
 export function ErrorBox({ message }: { message: string | null }) {
-  return message ? <div className="error">{message}</div> : null
+  // A low tone when an error appears (or changes), so it is noticed even if it is off screen.
+  useEffect(() => {
+    if (message) sound.error()
+  }, [message])
+  return message ? (
+    <div className="error" role="alert">
+      {message}
+    </div>
+  ) : null
 }
 
 export function LiveBadge({ live }: { live: LiveStatus | null }) {

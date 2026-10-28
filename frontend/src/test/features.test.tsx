@@ -221,7 +221,7 @@ describe('appearance', () => {
     const [opacity] = within(panel).getAllByRole('slider')
     fireEvent.change(opacity, { target: { value: '100' } })
     expect(document.documentElement.style.getPropertyValue('--glass-alpha')).toBe('1')
-    await userEvent.click(within(panel).getByLabelText('Animated background'))
+    await userEvent.click(within(panel).getByLabelText('Animated headings'))
     expect(document.documentElement.dataset.motion).toBe('off')
     await userEvent.click(within(panel).getByRole('button', { name: 'Light' }))
     expect(document.documentElement.dataset.theme).toBe('light')
