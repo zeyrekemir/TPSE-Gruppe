@@ -1,9 +1,10 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
-import { api, type AuthConfig } from '../api'
+import { api, ApiError, type AuthConfig } from '../api'
 import { useAuth } from '../auth'
 import { Logo } from '../Logo'
 import { ErrorBox } from '../ui'
+import { LegalLinks } from './LegalPage'
 
 export default function LoginPage() {
   const { t } = useTranslation()
@@ -23,8 +24,9 @@ export default function LoginPage() {
     setBusy(true)
     try {
       await login(username, password)
-    } catch {
-      setError(t('login.failed'))
+    } catch (err) {
+      // 429: the account is briefly locked after too many wrong passwords.
+      setError(err instanceof ApiError && err.status === 429 ? t('login.tooMany') : t('login.failed'))
     } finally {
       setBusy(false)
     }
@@ -108,6 +110,7 @@ export default function LoginPage() {
         <button type="submit" disabled={busy}>
           {t('login.submit')}
         </button>
+        <LegalLinks />
       </form>
     </div>
   )

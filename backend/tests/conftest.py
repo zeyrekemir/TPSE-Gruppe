@@ -27,7 +27,10 @@ from app.main import app
 
 @pytest.fixture(autouse=True)
 def fresh_db():
+    from app.throttle import login_throttle
+
     Base.metadata.drop_all(engine)
+    login_throttle.reset()  # failed sign-ins of one test must not lock out the next
     yield
 
 

@@ -73,6 +73,11 @@ class Settings(BaseSettings):
     # Live status: a robot counts as online if its last heartbeat is newer than this.
     live_timeout_seconds: int = 90
 
+    # Imprint and privacy pages: who is responsible for this application (the lab), shown publicly.
+    legal_contact_name: str = ""
+    legal_contact_email: str = ""
+    legal_contact_address: str = ""
+
     @property
     def oidc_admin_user_list(self) -> list[str]:
         return [u.strip().lower() for u in self.oidc_admin_users.split(",") if u.strip()]

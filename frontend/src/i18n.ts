@@ -8,7 +8,7 @@ const en = {
     save: 'Save', cancel: 'Cancel', delete: 'Delete', edit: 'Edit', add: 'Add', loading: 'Loading…',
     none: '—', confirmDelete: 'Really delete?', all: 'All', name: 'Name', actions: 'Actions',
   },
-  login: { tagline: 'Every robot in the lab, one place: who has it, what state it is in, what was tried.', sso: 'Sign in with {{label}}', tuidHeading: 'Sign in with {{label}}:', ssoNotConfigured: 'Available once the lab has registered the app with TU single sign-on.', or: 'or with username', ssoError: 'Single sign-on failed ({{reason}}). Please try again.', ssoUnreachable: 'The {{label}} sign-in server is not reachable right now. Please try again later or sign in with your username.', title: 'Sign in', username: 'Username', password: 'Password', submit: 'Sign in', failed: 'Wrong username or password' },
+  login: { tagline: 'Every robot in the lab, one place: who has it, what state it is in, what was tried.', sso: 'Sign in with {{label}}', tuidHeading: 'Sign in with {{label}}:', ssoNotConfigured: 'Available once the lab has registered the app with TU single sign-on.', or: 'or with username', ssoError: 'Single sign-on failed ({{reason}}). Please try again.', ssoUnreachable: 'The {{label}} sign-in server is not reachable right now. Please try again later or sign in with your username.', title: 'Sign in', username: 'Username', password: 'Password', submit: 'Sign in', failed: 'Wrong username or password', tooMany: 'Too many wrong passwords for this account. Please wait a few minutes and try again.' },
   status: {
     available: 'Available', reserved: 'Reserved', maintenance: 'In maintenance', defect: 'Defect', retired: 'Retired',
   },
@@ -81,7 +81,7 @@ const de: Dict = {
     save: 'Speichern', cancel: 'Abbrechen', delete: 'Löschen', edit: 'Bearbeiten', add: 'Hinzufügen', loading: 'Lädt…',
     none: '—', confirmDelete: 'Wirklich löschen?', all: 'Alle', name: 'Name', actions: 'Aktionen',
   },
-  login: { tagline: 'Alle Roboter des Labs an einem Ort: wer ihn hat, in welchem Zustand er ist, was versucht wurde.', sso: 'Mit {{label}} anmelden', tuidHeading: 'Zum Login mit {{label}}:', ssoNotConfigured: 'Verfügbar, sobald das Lab die App für das TU-Single-Sign-on registriert hat.', or: 'oder mit Benutzername', ssoError: 'Anmeldung über SSO fehlgeschlagen ({{reason}}). Bitte erneut versuchen.', ssoUnreachable: 'Der {{label}}-Anmeldeserver ist gerade nicht erreichbar. Bitte später erneut versuchen oder mit Benutzername anmelden.', title: 'Anmelden', username: 'Benutzername', password: 'Passwort', submit: 'Anmelden', failed: 'Benutzername oder Passwort falsch' },
+  login: { tagline: 'Alle Roboter des Labs an einem Ort: wer ihn hat, in welchem Zustand er ist, was versucht wurde.', sso: 'Mit {{label}} anmelden', tuidHeading: 'Zum Login mit {{label}}:', ssoNotConfigured: 'Verfügbar, sobald das Lab die App für das TU-Single-Sign-on registriert hat.', or: 'oder mit Benutzername', ssoError: 'Anmeldung über SSO fehlgeschlagen ({{reason}}). Bitte erneut versuchen.', ssoUnreachable: 'Der {{label}}-Anmeldeserver ist gerade nicht erreichbar. Bitte später erneut versuchen oder mit Benutzername anmelden.', title: 'Anmelden', username: 'Benutzername', password: 'Passwort', submit: 'Anmelden', failed: 'Benutzername oder Passwort falsch', tooMany: 'Zu viele falsche Passwörter für dieses Konto. Bitte ein paar Minuten warten und erneut versuchen.' },
   status: {
     available: 'Verfügbar', reserved: 'Reserviert', maintenance: 'In Wartung', defect: 'Defekt', retired: 'Außer Betrieb',
   },

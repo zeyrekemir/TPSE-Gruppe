@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect } from 'react'
-import { BrowserRouter, Link, Navigate, NavLink, Route, Routes, useNavigate } from 'react-router-dom'
+import { BrowserRouter, Link, Navigate, NavLink, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { AppearanceProvider, useAppearance } from './appearance'
 import AppearancePanel from './AppearancePanel'
@@ -14,6 +14,7 @@ import TicketsPage from './pages/TicketsPage'
 import LogsPage from './pages/LogsPage'
 import UsersPage from './pages/UsersPage'
 import LabelsPage from './pages/LabelsPage'
+import LegalPage, { LegalLinks } from './pages/LegalPage'
 
 // Heavy pages are loaded on demand.
 const CalendarPage = lazy(() => import('./pages/CalendarPage'))
@@ -78,8 +79,12 @@ function Shell() {
   const { user, loading, logout, setLanguage } = useAuth()
   const { appearance } = useAppearance()
   const navigate = useNavigate()
+  const { pathname } = useLocation()
   usePointerSheen()
   usePauseMotionWhileInteracting()
+
+  // Imprint and privacy notice are public: shown whether signed in or not.
+  const legal = pathname === '/impressum' ? 'imprint' : pathname === '/datenschutz' ? 'privacy' : null
 
   let content
   if (loading) {
@@ -88,6 +93,8 @@ function Shell() {
         <LogoMark size={64} />
       </div>
     )
+  } else if (legal) {
+    content = <LegalPage kind={legal} />
   } else if (!user) {
     // Signed out: the scroll story leads into the sign-in form (or just the form, if the story is off).
     content = storyEnabled(appearance.intro) ? (
@@ -142,6 +149,7 @@ function Shell() {
                 <LogoutIcon />
               </button>
             </div>
+            <LegalLinks />
           </div>
         </aside>
         <main className="page-enter" key={user.id}>

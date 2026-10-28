@@ -157,6 +157,15 @@ function detailMessage(detail: unknown): string {
 
 const TOKEN_KEY = 'robots.token'
 
+/** Contact for the imprint and privacy pages, and which outside services are switched on. */
+export interface LegalInfo {
+  name: string
+  email: string
+  address: string
+  discord: boolean
+  tuid: boolean
+}
+
 export function getToken(): string | null {
   try {
     return localStorage.getItem(TOKEN_KEY)
@@ -215,6 +224,7 @@ export const api = {
   },
   me: () => request<User>('GET', '/auth/me'),
   authConfig: () => request<AuthConfig>('GET', '/auth/config'),
+  legal: () => request<LegalInfo>('GET', '/legal'),
   /** Full-page redirect to the SSO provider; it comes back to /#token=... */
   ssoLogin: () => window.location.assign('/api/auth/oidc/login'),
   updateMe: (data: Partial<Pick<User, 'display_name' | 'email' | 'language'>>) =>

@@ -93,4 +93,58 @@ describe('App', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Sign in' }))
     expect(await screen.findByText('Wrong username or password')).toBeInTheDocument()
   })
+
+  it('says so when the account is locked after too many wrong passwords', async () => {
+    mockFetch({ 'POST /api/auth/login': () => ({ status: 429, body: { detail: 'Too many failed sign-ins.' } }) })
+    window.history.pushState({}, '', '/')
+    render(<App />)
+    await userEvent.type(await screen.findByLabelText('Username'), 'alice')
+    await userEvent.type(screen.getByLabelText('Password'), 'wrong')
+    await userEvent.click(screen.getByRole('button', { name: 'Sign in' }))
+    expect(await screen.findByText(/Too many wrong passwords for this account/)).toBeInTheDocument()
+  })
+})
+
+describe('Imprint and privacy notice', () => {
+  const contact = { name: 'PEARL Lab, Dr. Test', email: 'pearl@lab.test', address: 'S2|02, 64289 Darmstadt', discord: true, tuid: true }
+
+  it('is public: opens without signing in, with the lab contact from the server', async () => {
+    mockFetch({ 'GET /api/legal': () => ({ body: contact }) })
+    window.history.pushState({}, '', '/impressum')
+    render(<App />)
+    expect(await screen.findByRole('heading', { name: 'Imprint' })).toBeInTheDocument()
+    expect(screen.getByText(/DE 111 608 628/)).toBeInTheDocument()
+    expect(await screen.findByRole('link', { name: 'pearl@lab.test' })).toHaveAttribute('href', 'mailto:pearl@lab.test')
+  })
+
+  it('describes the data processed, including Discord only when it is switched on', async () => {
+    mockFetch({ 'GET /api/legal': () => ({ body: contact }) })
+    window.history.pushState({}, '', '/datenschutz')
+    const { unmount } = render(<App />)
+    expect(await screen.findByRole('heading', { name: 'Privacy notice' })).toBeInTheDocument()
+    expect(await screen.findByText(/Discord Inc\. \(USA\)/)).toBeInTheDocument()
+    expect(screen.getByText(/at most 15 minutes/)).toBeInTheDocument()
+    unmount()
+
+    mockFetch({ 'GET /api/legal': () => ({ body: { ...contact, discord: false } }) })
+    render(<App />)
+    await screen.findByRole('heading', { name: 'Privacy notice' })
+    expect(screen.queryByText(/Discord Inc/)).toBeNull()
+  })
+
+  it('warns while the contact is not entered yet', async () => {
+    mockFetch({ 'GET /api/legal': () => ({ body: { name: '', email: '', address: '', discord: false, tuid: false } }) })
+    window.history.pushState({}, '', '/impressum')
+    render(<App />)
+    expect(await screen.findByText(/has not been entered yet/)).toBeInTheDocument()
+  })
+
+  it('is linked from the sign-in form', async () => {
+    mockFetch({})
+    window.history.pushState({}, '', '/')
+    render(<App />)
+    await screen.findByLabelText('Username')
+    expect(screen.getByRole('link', { name: 'Imprint' })).toHaveAttribute('href', '/impressum')
+    expect(screen.getByRole('link', { name: 'Privacy' })).toHaveAttribute('href', '/datenschutz')
+  })
 })

@@ -2205,3 +2205,70 @@ button.sso {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* --- Imprint and privacy notice --- */
+.legal-page {
+  position: relative;
+  z-index: 1;
+  min-height: 100vh;
+  display: grid;
+  place-items: start center;
+  padding: 3rem 1rem;
+}
+.legal {
+  width: min(760px, 100%);
+  padding: 2rem 2.25rem;
+  line-height: 1.6;
+}
+.legal h1 {
+  font-family: var(--font-display);
+  margin: 0.75rem 0 1rem;
+}
+.legal h2 {
+  font-size: 1.05rem;
+  margin: 1.6rem 0 0.4rem;
+}
+.legal address {
+  font-style: normal;
+  margin: 0.4rem 0 0.8rem;
+}
+.legal ul {
+  padding-left: 1.2rem;
+}
+.legal li + li {
+  margin-top: 0.5rem;
+}
+.legal a {
+  color: var(--accent);
+}
+.legal-back {
+  font-size: 0.9rem;
+  color: var(--muted);
+  text-decoration: none;
+}
+.legal-missing {
+  padding: 0.6rem 0.8rem;
+  border-radius: 10px;
+  background: rgb(251 191 36 / 0.14);
+  border: 1px solid rgb(251 191 36 / 0.4);
+}
+.legal-links {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  margin-top: 0.75rem;
+  font-size: 0.8rem;
+}
+.legal-links a {
+  color: var(--muted);
+  text-decoration: none;
+}
+.legal-links a:hover {
+  color: var(--accent);
+  text-decoration: underline;
+}
+@media (max-width: 640px) {
+  .legal {
+    padding: 1.4rem 1.2rem;
+  }
+}

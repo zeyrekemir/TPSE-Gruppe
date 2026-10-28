@@ -88,7 +88,8 @@ def _send_email(settings: Settings, recipients: list[str], subject: str, text: s
 
 
 def _send_discord(settings: Settings, subject: str, text: str) -> None:
-    content = f"**{subject}**\n{text}"[:1900]
+    # Only the subject (robot and ticket title): the body names people, and Discord is an outside (US) service.
+    content = f"**{subject}**"[:1900]
     response = httpx.post(settings.discord_webhook_url, json={"content": content}, timeout=10)
     response.raise_for_status()
 

@@ -73,3 +73,16 @@ for module in (auth, oidc, users, robots, live, reservations, tickets, logs, sta
 @app.get("/api/health", tags=["meta"])
 def health():
     return {"status": "ok"}
+
+
+@app.get("/api/legal", tags=["meta"])
+def legal():
+    """Contact responsible for this application, for the public imprint and privacy pages (no sign-in)."""
+    settings = get_settings()
+    return {
+        "name": settings.legal_contact_name,
+        "email": settings.legal_contact_email,
+        "address": settings.legal_contact_address,
+        "discord": bool(settings.discord_webhook_url),
+        "tuid": bool(settings.oidc_issuer),
+    }

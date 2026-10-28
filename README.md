@@ -121,6 +121,21 @@ docker compose exec backend python -m app.check_setup --ldap-user <tu-id> --mail
 python tools/smoke_test.py --url https://<hub address> --user admin --password <first admin password>
 ```
 
+### Backups
+
+The `backup` service writes a compressed SQL dump of the database when the stack starts and then every 24 hours, into `./backups` (set `BACKUP_DIR` to put them elsewhere, e.g. on a separate disk or a mounted share). Dumps older than `BACKUP_KEEP_DAYS` (default 14) are deleted. Copy the folder off the server regularly: a backup on the same disk does not survive the disk.
+
+Restoring (replaces all data; stop the backend first so nobody writes meanwhile):
+
+```bash
+docker compose stop backend
+docker compose exec -T db sh -c "dropdb -U robots robots && createdb -U robots robots"
+gunzip -c backups/robots-YYYY-MM-DD_HHMM.sql.gz | docker compose exec -T db psql -q -U robots robots
+docker compose start backend
+```
+
+### Checking the setup
+
 `check_setup` tests the security settings, the database, the TU-ID provider (and prints the redirect URI HRZ must have), LDAP (with `--ldap-user`, a real sign-in; the password is asked for), mail login (with `--mail-to`, one test mail) and the Discord webhook (with `--discord-test`, one test post). `smoke_test.py` then signs in and reads every part of the API.
 
 ## Configuration
