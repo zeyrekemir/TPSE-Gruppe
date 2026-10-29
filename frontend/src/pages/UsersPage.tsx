@@ -5,6 +5,7 @@ import { useAuth } from '../auth'
 import { ErrorBox } from '../ui'
 import { useLoad } from '../util'
 import { Wave } from '../Wave'
+import { Select } from '../Select'
 
 export default function UsersPage() {
   const { t } = useTranslation()
@@ -78,10 +79,10 @@ export default function UsersPage() {
         </label>
         <label>
           {t('user.role')}
-          <select value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value as Role })}>
+          <Select value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value as Role })}>
             <option value="member">{t('user.roles.member')}</option>
             <option value="admin">{t('user.roles.admin')}</option>
-          </select>
+          </Select>
         </label>
         <div className="actions span-2">
           <button type="submit">{t('common.add')}</button>
@@ -111,7 +112,7 @@ export default function UsersPage() {
                 <td>{u.email ?? t('common.none')}</td>
                 <td>{u.auth_source.toUpperCase()}</td>
                 <td>
-                  <select
+                  <Select
                     value={u.role}
                     aria-label={t('user.role')}
                     disabled={u.id === me?.id}
@@ -119,7 +120,7 @@ export default function UsersPage() {
                   >
                     <option value="member">{t('user.roles.member')}</option>
                     <option value="admin">{t('user.roles.admin')}</option>
-                  </select>
+                  </Select>
                 </td>
                 <td>
                   <input

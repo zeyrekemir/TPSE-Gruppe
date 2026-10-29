@@ -5,6 +5,8 @@ import { LogForm, LogTable } from '../components'
 import { ErrorBox } from '../ui'
 import { useLoad } from '../util'
 import { Wave } from '../Wave'
+import { robotDetails } from '../options'
+import { Select } from '../Select'
 
 export default function LogsPage() {
   const { t } = useTranslation()
@@ -18,14 +20,14 @@ export default function LogsPage() {
         <h1>
           <Wave text={t('nav.logs')} />
         </h1>
-        <select value={robotId} onChange={(e) => setRobotId(e.target.value ? Number(e.target.value) : '')}>
+        <Select details={robotDetails(robots.data)} value={robotId} onChange={(e) => setRobotId(e.target.value ? Number(e.target.value) : '')}>
           <option value="">{t('common.all')}</option>
           {robots.data?.map((r) => (
             <option key={r.id} value={r.id}>
               {r.name}
             </option>
           ))}
-        </select>
+        </Select>
       </div>
       <LogForm robots={robots.data ?? []} onDone={logs.reload} />
       <ErrorBox message={logs.error} />

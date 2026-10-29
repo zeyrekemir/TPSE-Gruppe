@@ -186,3 +186,21 @@ export const ShieldIcon = (p: SVGProps<SVGSVGElement>) => (
     <path d="m9 12 2.2 2.2L15.5 10" />
   </svg>
 )
+
+export const ChevronLeftIcon = (p: SVGProps<SVGSVGElement>) => (
+  <svg {...base(p)}>
+    <path d="m14.5 6-6 6 6 6" />
+  </svg>
+)
+
+export const ChevronRightIcon = (p: SVGProps<SVGSVGElement>) => (
+  <svg {...base(p)}>
+    <path d="m9.5 6 6 6-6 6" />
+  </svg>
+)
+
+export const CheckIcon = (p: SVGProps<SVGSVGElement>) => (
+  <svg {...base(p)}>
+    <path d="m5 12.5 4.5 4.5L19 7.5" />
+  </svg>
+)

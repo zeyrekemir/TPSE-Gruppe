@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { AppearanceProvider } from '../appearance'
@@ -210,6 +210,23 @@ describe('experiment log form', () => {
     expect(body.date).toMatch(/Z$/)
     expect(onDone).toHaveBeenCalled()
     expect(screen.getByLabelText('Title')).toHaveValue('')
+  })
+
+  it('keeps its date on the current time while the form stays open, until a date is picked', () => {
+    vi.useFakeTimers({ now: new Date(2026, 9, 29, 17, 27, 30) })
+    try {
+      render(<LogForm robots={[robot()]} robotId={1} onDone={vi.fn()} />)
+      const date = screen.getByLabelText('Date')
+      expect(date).toHaveValue('2026-10-29T17:27')
+      act(() => vi.advanceTimersByTime(65_000))
+      expect(date).toHaveValue('2026-10-29T17:28')
+      // A picked date is kept.
+      fireEvent.change(date, { target: { value: '2026-10-20T09:00' } })
+      act(() => vi.advanceTimersByTime(120_000))
+      expect(date).toHaveValue('2026-10-20T09:00')
+    } finally {
+      vi.useRealTimers()
+    }
   })
 })
 

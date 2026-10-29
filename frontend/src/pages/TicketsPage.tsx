@@ -5,6 +5,8 @@ import { TicketForm, TicketItem } from '../components'
 import { ErrorBox } from '../ui'
 import { useLoad } from '../util'
 import { Wave } from '../Wave'
+import { robotDetails } from '../options'
+import { Select } from '../Select'
 
 export default function TicketsPage() {
   const { t } = useTranslation()
@@ -24,14 +26,14 @@ export default function TicketsPage() {
           <Wave text={t('nav.tickets')} />
         </h1>
         <div className="actions">
-          <select value={robotId} onChange={(e) => setRobotId(e.target.value ? Number(e.target.value) : '')}>
+          <Select details={robotDetails(robots.data)} value={robotId} onChange={(e) => setRobotId(e.target.value ? Number(e.target.value) : '')}>
             <option value="">{t('common.all')}</option>
             {robots.data?.map((r) => (
               <option key={r.id} value={r.id}>
                 {r.name}
               </option>
             ))}
-          </select>
+          </Select>
           <label className="checkbox">
             <input type="checkbox" checked={openOnly} onChange={(e) => setOpenOnly(e.target.checked)} />
             {t('ticket.openOnly')}

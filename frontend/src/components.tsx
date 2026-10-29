@@ -13,8 +13,11 @@ import {
   type User,
 } from './api'
 import { useAuth } from './auth'
+import { DateTimeField } from './DateTimeField'
 import { ErrorBox } from './ui'
-import { formatDateTime, fromLocalInput, toLocalInput } from './util'
+import { formatDateTime, fromLocalInput, toLocalInput, useInterval } from './util'
+import { robotDetails } from './options'
+import { Select } from './Select'
 
 // --- Reservations ---
 
@@ -69,14 +72,14 @@ export function ReservationForm({
       <h3 className="span-2">{t('reservation.new')}</h3>
       <label>
         {t('reservation.robot')}
-        <select value={robotId} onChange={(e) => setRobotId(e.target.value ? Number(e.target.value) : '')} required>
+        <Select details={robotDetails(bookable)} value={robotId} onChange={(e) => setRobotId(e.target.value ? Number(e.target.value) : '')} required>
           <option value="">{t('common.none')}</option>
           {bookable.map((r) => (
             <option key={r.id} value={r.id}>
               {r.name}
             </option>
           ))}
-        </select>
+        </Select>
       </label>
       <label>
         {t('reservation.purpose')}
@@ -84,11 +87,11 @@ export function ReservationForm({
       </label>
       <label>
         {t('reservation.start')}
-        <input type="datetime-local" value={start} onChange={(e) => setStart(e.target.value)} required />
+        <DateTimeField value={start} onChange={setStart} required />
       </label>
       <label>
         {t('reservation.end')}
-        <input type="datetime-local" value={end} onChange={(e) => setEnd(e.target.value)} required />
+        <DateTimeField value={end} onChange={setEnd} required />
       </label>
       {conflict && (
         <div className="conflict span-2">
@@ -154,7 +157,7 @@ export function TicketForm({ robots, robotId, onDone }: { robots: Robot[]; robot
       {robotId === undefined && (
         <label>
           {t('reservation.robot')}
-          <select
+          <Select details={robotDetails(robots)}
             value={form.robot_id}
             onChange={(e) => setForm({ ...form, robot_id: e.target.value ? Number(e.target.value) : '' })}
             required
@@ -165,15 +168,15 @@ export function TicketForm({ robots, robotId, onDone }: { robots: Robot[]; robot
                 {r.name}
               </option>
             ))}
-          </select>
+          </Select>
         </label>
       )}
       <label>
         {t('ticket.kind')}
-        <select value={form.kind} onChange={(e) => setForm({ ...form, kind: e.target.value as TicketKind })}>
+        <Select value={form.kind} onChange={(e) => setForm({ ...form, kind: e.target.value as TicketKind })}>
           <option value="fault">{t('ticket.kinds.fault')}</option>
           <option value="maintenance">{t('ticket.kinds.maintenance')}</option>
-        </select>
+        </Select>
       </label>
       <label className="span-2">
         {t('ticket.title')}
@@ -243,7 +246,7 @@ export function TicketItem({ ticket, users, onChange }: { ticket: Ticket; users:
           <div className="form-grid">
             <label>
               {t('ticket.status')}
-              <select
+              <Select
                 value={ticket.status}
                 disabled={!canManage}
                 onChange={(e) => update({ status: e.target.value as TicketStatus })}
@@ -253,11 +256,11 @@ export function TicketItem({ ticket, users, onChange }: { ticket: Ticket; users:
                     {statusName(s)}
                   </option>
                 ))}
-              </select>
+              </Select>
             </label>
             <label>
               {t('ticket.assignee')}
-              <select
+              <Select
                 value={ticket.assignee?.id ?? ''}
                 disabled={!canManage}
                 onChange={(e) => update({ assignee_id: e.target.value ? Number(e.target.value) : null })}
@@ -268,7 +271,7 @@ export function TicketItem({ ticket, users, onChange }: { ticket: Ticket; users:
                     {u.display_name}
                   </option>
                 ))}
-              </select>
+              </Select>
             </label>
           </div>
           <h4>{t('ticket.history')}</h4>
@@ -316,6 +319,13 @@ export function LogForm({ robots, robotId, onDone }: { robots: Robot[]; robotId?
     result: 'success' as ExperimentResult,
   })
   const [error, setError] = useState<string | null>(null)
+  // Until someone picks a date, the field shows "now" and keeps up with the clock (a form left open would
+  // otherwise log the time it was opened). A picked date stays as it is, for logging earlier runs.
+  const [followClock, setFollowClock] = useState(true)
+  useInterval(() => {
+    const now = toLocalInput(new Date())
+    if (followClock && form.date !== now) setForm((f) => ({ ...f, date: now }))
+  }, 5000)
 
   async function submit(e: FormEvent) {
     e.preventDefault()
@@ -324,10 +334,11 @@ export function LogForm({ robots, robotId, onDone }: { robots: Robot[]; robotId?
       await api.createLog({
         ...form,
         robot_id: form.robot_id,
-        date: fromLocalInput(form.date),
+        date: fromLocalInput(followClock ? toLocalInput(new Date()) : form.date),
         description: form.description || undefined,
       })
-      setForm((f) => ({ ...f, title: '', description: '' }))
+      setForm((f) => ({ ...f, title: '', description: '', date: toLocalInput(new Date()) }))
+      setFollowClock(true)
       onDone()
     } catch (err) {
       setError((err as Error).message)
@@ -340,7 +351,7 @@ export function LogForm({ robots, robotId, onDone }: { robots: Robot[]; robotId?
       {robotId === undefined && (
         <label>
           {t('reservation.robot')}
-          <select
+          <Select details={robotDetails(robots)}
             value={form.robot_id}
             onChange={(e) => setForm({ ...form, robot_id: e.target.value ? Number(e.target.value) : '' })}
             required
@@ -351,22 +362,29 @@ export function LogForm({ robots, robotId, onDone }: { robots: Robot[]; robotId?
                 {r.name}
               </option>
             ))}
-          </select>
+          </Select>
         </label>
       )}
       <label>
         {t('log.date')}
-        <input type="datetime-local" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} required />
+        <DateTimeField
+          value={form.date}
+          onChange={(date) => {
+            setFollowClock(false)
+            setForm({ ...form, date })
+          }}
+          required
+        />
       </label>
       <label>
         {t('log.result')}
-        <select value={form.result} onChange={(e) => setForm({ ...form, result: e.target.value as ExperimentResult })}>
+        <Select value={form.result} onChange={(e) => setForm({ ...form, result: e.target.value as ExperimentResult })}>
           {RESULTS.map((r) => (
             <option key={r} value={r}>
               {t(`log.results.${r}`)}
             </option>
           ))}
-        </select>
+        </Select>
       </label>
       <label className="span-2">
         {t('log.title')}

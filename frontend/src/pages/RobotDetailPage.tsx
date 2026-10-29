@@ -9,6 +9,7 @@ import { ErrorBox, StatusBadge } from '../ui'
 import { formatDateTime, useInterval, useLoad } from '../util'
 import LivePanel from './LivePanel'
 import RobotForm from './RobotForm'
+import { Select } from '../Select'
 
 export default function RobotDetailPage() {
   const id = Number(useParams().id)
@@ -118,7 +119,7 @@ export default function RobotDetailPage() {
           <dt>{t('robot.status')}</dt>
           <dd>
             {isAdmin || isResponsible ? (
-              <select
+              <Select
                 value={r.status}
                 onChange={async (e) => {
                   await api.updateRobot(r.id, { status: e.target.value as RobotStatus })
@@ -130,7 +131,7 @@ export default function RobotDetailPage() {
                     {t(`status.${s}`)}
                   </option>
                 ))}
-              </select>
+              </Select>
             ) : (
               t(`status.${r.status}`)
             )}

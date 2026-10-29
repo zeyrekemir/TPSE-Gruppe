@@ -13,6 +13,8 @@ import { ReservationForm } from '../components'
 import { ErrorBox } from '../ui'
 import { formatDateTime, useLoad } from '../util'
 import { Wave } from '../Wave'
+import { robotDetails } from '../options'
+import { Select } from '../Select'
 
 // Stable colour per robot so bookings are easy to tell apart. No red: that means "defect" elsewhere.
 const COLORS = ['#5b5bf7', '#0891b2', '#a855f7', '#16a34a', '#db2777', '#d97706', '#4f46e5', '#0d9488']
@@ -89,14 +91,14 @@ export default function CalendarPage() {
           <Wave text={t('nav.calendar')} />
         </h1>
         <div className="actions">
-          <select value={robotFilter} onChange={(e) => setRobotFilter(e.target.value ? Number(e.target.value) : '')}>
+          <Select details={robotDetails(robots)} value={robotFilter} onChange={(e) => setRobotFilter(e.target.value ? Number(e.target.value) : '')}>
             <option value="">{t('common.all')}</option>
             {robots?.map((r) => (
               <option key={r.id} value={r.id}>
                 {r.name}
               </option>
             ))}
-          </select>
+          </Select>
           <label className="checkbox">
             <input type="checkbox" checked={mineOnly} onChange={(e) => setMineOnly(e.target.checked)} />
             {t('reservation.mine')}

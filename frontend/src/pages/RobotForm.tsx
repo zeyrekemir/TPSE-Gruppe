@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { api, type Robot, type RobotInput, type RobotStatus, type User } from '../api'
 import { ErrorBox } from '../ui'
 import { useLoad } from '../util'
+import { Select } from '../Select'
 
 const STATUSES: RobotStatus[] = ['available', 'maintenance', 'defect', 'retired']
 
@@ -55,7 +56,7 @@ export default function RobotForm({
       </label>
       <label>
         {t('robot.responsible')}
-        <select
+        <Select
           value={form.responsible_user_id ?? ''}
           onChange={(e) => set('responsible_user_id', e.target.value ? Number(e.target.value) : null)}
         >
@@ -65,7 +66,7 @@ export default function RobotForm({
               {u.display_name}
             </option>
           ))}
-        </select>
+        </Select>
       </label>
       <label>
         {t('robot.documentation')}
@@ -78,13 +79,13 @@ export default function RobotForm({
       </label>
       <label>
         {t('robot.status')}
-        <select value={form.status} onChange={(e) => set('status', e.target.value as RobotStatus)}>
+        <Select value={form.status} onChange={(e) => set('status', e.target.value as RobotStatus)}>
           {STATUSES.map((s) => (
             <option key={s} value={s}>
               {t(`status.${s}`)}
             </option>
           ))}
-        </select>
+        </Select>
       </label>
       <label className="span-2">
         {t('robot.description')}

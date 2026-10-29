@@ -17,6 +17,10 @@ const en = {
     description: 'Description', status: 'Status', openTickets: 'Open tickets', reserve: 'Reserve',
     upcoming: 'Upcoming reservations', noRobots: 'No robots yet.',
   },
+  picker: {
+    open: 'Choose date and time', title: 'Date and time', prev: 'Previous month', next: 'Next month',
+    time: 'Time', hour: 'Hour', minute: 'Minute', now: 'Now', done: 'Done', none: 'No date chosen yet',
+  },
   reservation: {
     new: 'New reservation', robot: 'Robot', start: 'Start', end: 'End', purpose: 'Purpose', by: 'By',
     conflict: 'This slot is already taken.', conflictsWith: 'Conflicts with', suggestion: 'Next free slot',
@@ -91,6 +95,10 @@ const de: Dict = {
     new: 'Neuer Roboter', type: 'Typ', location: 'Standort', responsible: 'Verantwortlich', documentation: 'Dokumentation',
     description: 'Beschreibung', status: 'Status', openTickets: 'Offene Meldungen', reserve: 'Reservieren',
     upcoming: 'Kommende Reservierungen', noRobots: 'Noch keine Roboter.',
+  },
+  picker: {
+    open: 'Datum und Uhrzeit wählen', title: 'Datum und Uhrzeit', prev: 'Vorheriger Monat', next: 'Nächster Monat',
+    time: 'Uhrzeit', hour: 'Stunde', minute: 'Minute', now: 'Jetzt', done: 'Fertig', none: 'Noch kein Datum gewählt',
   },
   reservation: {
     new: 'Neue Reservierung', robot: 'Roboter', start: 'Beginn', end: 'Ende', purpose: 'Zweck', by: 'Von',
