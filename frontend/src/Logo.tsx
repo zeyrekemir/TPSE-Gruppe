@@ -19,9 +19,11 @@ export function LogoMark({ size = 40, className }: { size?: number; className?: 
       aria-label="PEARL"
     >
       <defs>
+        {/* The site's own gradient (--grad in index.css): indigo, violet, pink */}
         <linearGradient id={`${id}-tile`} x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stopColor="#6d5dfc" />
-          <stop offset="1" stopColor="#9b4dff" />
+          <stop offset="0" stopColor="#6366f1" />
+          <stop offset="0.5" stopColor="#a855f7" />
+          <stop offset="1" stopColor="#ec4899" />
         </linearGradient>
         <radialGradient id={`${id}-pearl`} cx="0.35" cy="0.3" r="0.85">
           <stop offset="0" stopColor="#ffffff" />

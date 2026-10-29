@@ -153,8 +153,8 @@ function Shell() {
                 <LogoutIcon />
               </button>
             </div>
-            <LegalLinks />
           </div>
+          <LegalLinks />
         </aside>
         <main className="page-enter" key={user.id} id="main" tabIndex={-1}>
           <Suspense fallback={<p className="muted">{t('common.loading')}</p>}>

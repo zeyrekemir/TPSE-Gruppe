@@ -637,12 +637,12 @@ label.checkbox {
   color: var(--muted);
 }
 
-.sidebar nav {
+.sidebar > nav:not(.legal-links) {
   display: flex;
   flex-direction: column;
   gap: 0.3rem;
 }
-.sidebar nav a {
+.sidebar > nav:not(.legal-links) a {
   position: relative;
   display: flex;
   align-items: center;
@@ -653,21 +653,28 @@ label.checkbox {
   font-weight: 600;
   transition: background 0.2s, color 0.2s, transform 0.2s;
 }
-.sidebar nav a:hover {
+.sidebar > nav:not(.legal-links) a:hover {
   background: var(--hover);
   color: var(--text);
   transform: translateX(3px);
 }
-.sidebar nav a.active {
+.sidebar > nav:not(.legal-links) a.active {
   background: linear-gradient(135deg, rgb(99 102 241 / 0.28), rgb(236 72 153 / 0.18));
   color: var(--text);
   box-shadow: inset 0 1px 0 var(--glass-hi), inset 0 0 0 1px rgb(139 139 255 / 0.3);
 }
-.sidebar nav a.active svg {
+.sidebar > nav:not(.legal-links) a.active svg {
   color: var(--accent);
   filter: drop-shadow(0 0 6px var(--accent));
 }
 
+.sidebar > .legal-links {
+  margin-top: 0.6rem;
+  font-size: 0.74rem;
+}
+.sidebar > .legal-links a {
+  padding: 0.25rem 0.55rem;
+}
 .sidebar-foot {
   margin-top: auto;
   display: grid;
@@ -721,8 +728,10 @@ main {
   min-width: 0;
 }
 .page-enter > * {
-  animation: rise 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  animation: rise 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
 }
+/* Fill mode `backwards`, never `both`: kept after the animation ends, even filter: blur(0) and a no-op
+   transform make the element a backdrop root, and the glass panels inside it could no longer blur the page behind. */
 @keyframes rise {
   from {
     opacity: 0;
@@ -1051,7 +1060,7 @@ ul.plain > li:not(.card) {
   color: var(--text);
   overflow: hidden;
   transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.3s, border-color 0.3s;
-  animation: rise 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  animation: rise 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
   animation-delay: calc(var(--i, 0) * 60ms);
 }
 .robot-card::before {
@@ -1352,11 +1361,11 @@ td select {
   white-space: nowrap;
   pointer-events: none;
   user-select: none;
-  animation: rise 1.2s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  animation: rise 1.2s cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
 }
 .login-hero {
   position: relative;
-  animation: rise 0.9s 0.1s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  animation: rise 0.9s 0.1s cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
 }
 .mega {
   font-family: var(--font-display);
@@ -1396,7 +1405,7 @@ td select {
   gap: 1rem;
   padding: 2.2rem;
   border-radius: 30px;
-  animation: rise 0.9s 0.25s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  animation: rise 0.9s 0.25s cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
 }
 .login-form h1 {
   margin: 0.6rem 0 0;
@@ -1432,7 +1441,8 @@ td select {
   letter-spacing: 0.14em;
   /* keep optical centre despite trailing letter-spacing */
   margin-right: -0.14em;
-  background: linear-gradient(180deg, var(--text) 40%, color-mix(in srgb, var(--accent) 70%, var(--text)));
+  /* The site's gradient, left to right like the eyebrows. */
+  background: linear-gradient(90deg, #6366f1 0%, #a855f7 50%, #ec4899 100%);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
@@ -2435,12 +2445,12 @@ button.sso {
   }
   .brand .logo-text,
   .brand-org,
-  .sidebar nav a span,
+  .sidebar > nav:not(.legal-links) a span,
   .me-name,
   .me .avatar {
     display: none;
   }
-  .sidebar nav {
+  .sidebar > nav:not(.legal-links) {
     order: 3;
     flex: 1 0 100%;
     flex-direction: row;
@@ -2448,11 +2458,18 @@ button.sso {
     overflow-x: auto;
     scrollbar-width: none;
   }
-  .sidebar nav a {
+  .sidebar > nav:not(.legal-links) a {
     padding: 0.55rem 0.7rem;
   }
-  .sidebar nav a:hover {
+  .sidebar > nav:not(.legal-links) a:hover {
     transform: none;
+  }
+  /* The legal links get the bar's last row of their own. */
+  .sidebar > .legal-links {
+    order: 4;
+    flex: 1 0 100%;
+    margin: 0;
+    gap: 0.1rem;
   }
   .sidebar-foot {
     margin: 0 0 0 auto;
