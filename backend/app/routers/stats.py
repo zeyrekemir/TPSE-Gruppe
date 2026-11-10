@@ -10,7 +10,19 @@ from sqlalchemy import select
 
 from ..auth import DB, CurrentUser
 from ..config import LAB_TZ
-from ..models import ExperimentLog, ExperimentResult, Reservation, Robot, Ticket, User, utcnow
+from ..models import (
+    ExperimentLog,
+    ExperimentResult,
+    MemberType,
+    Reservation,
+    Robot,
+    RobotStatus,
+    RobotStatusChange,
+    Role,
+    Ticket,
+    User,
+    utcnow,
+)
 
 router = APIRouter(prefix="/stats", tags=["statistics"])
 
@@ -46,6 +58,49 @@ def _split_by_hour(start: datetime, end: datetime):
         cursor = stop
 
 
+DOWN_STATUSES = {RobotStatus.maintenance, RobotStatus.defect}
+
+
+def status_hours(robot: Robot, changes: list[RobotStatusChange], start: datetime, end: datetime) -> dict:
+    """Hours the robot spent in service (available) and out of it (maintenance or defect) inside [start, end).
+
+    Counting starts with the robot's first history entry (written when it is added, or by the migration that
+    introduced the history); a robot without any history counts with its current status. Retired time counts
+    as neither."""
+    up = down = 0.0
+    timeline = sorted(changes, key=lambda c: c.changed_at)
+    current = timeline[0].status if timeline else robot.status
+    cursor = max(start, timeline[0].changed_at if timeline else robot.created_at)
+    for change in timeline:
+        if change.changed_at <= cursor:
+            current = change.status
+            continue
+        if change.changed_at >= end:
+            break
+        hours = _hours(cursor, change.changed_at)
+        if current == RobotStatus.available:
+            up += hours
+        elif current in DOWN_STATUSES:
+            down += hours
+        cursor, current = change.changed_at, change.status
+    if cursor < end:
+        hours = _hours(cursor, end)
+        if current == RobotStatus.available:
+            up += hours
+        elif current in DOWN_STATUSES:
+            down += hours
+    return {"up": up, "down": down}
+
+
+def group_of(user: User | None) -> str:
+    """For the share of bookings: admins, staff or students."""
+    if user is None:
+        return "student"
+    if user.role == Role.admin:
+        return "admin"
+    return "staff" if user.member_type == MemberType.staff else "student"
+
+
 @router.get("")
 def usage_stats(_: CurrentUser, db: DB, days: Annotated[int, Query(ge=1, le=366)] = 30):
     end = utcnow()
@@ -56,6 +111,10 @@ def usage_stats(_: CurrentUser, db: DB, days: Annotated[int, Query(ge=1, le=366)
     reservations = db.scalars(select(Reservation).where(Reservation.end > start, Reservation.start < end)).all()
     tickets = db.scalars(select(Ticket).where(Ticket.created_at >= start)).all()
     logs = db.scalars(select(ExperimentLog).where(ExperimentLog.date >= start, ExperimentLog.date <= end)).all()
+    changes_by_robot = defaultdict(list)
+    for change in db.scalars(select(RobotStatusChange).where(RobotStatusChange.changed_at < end)):
+        changes_by_robot[change.robot_id].append(change)
+    uptime = {robot.id: status_hours(robot, changes_by_robot[robot.id], start, end) for robot in robots}
 
     per_robot = defaultdict(lambda: {"hours": 0.0, "lab_hours": 0.0, "count": 0})
     per_user = defaultdict(lambda: {"hours": 0.0, "count": 0})
@@ -89,6 +148,14 @@ def usage_stats(_: CurrentUser, db: DB, days: Annotated[int, Query(ge=1, le=366)
         return round(sum(1 for i in items if i.result == ExperimentResult.success) / len(items), 3) if items else None
 
     users = {u.id: u for u in db.scalars(select(User).where(User.id.in_(per_user.keys())))}
+    by_group = {"student": 0.0, "staff": 0.0, "admin": 0.0}
+    for uid, v in per_user.items():
+        by_group[group_of(users.get(uid))] += v["hours"]
+    booked = sum(by_group.values())
+
+    def share(up: float, down: float):
+        return round(up / (up + down), 3) if up + down else None
+
     first_day = start.astimezone(LAB_TZ).date()
     return {
         "range": {"start": start, "end": end, "days": days, "lab_hours": round(lab_hours, 1)},
@@ -100,6 +167,14 @@ def usage_stats(_: CurrentUser, db: DB, days: Annotated[int, Query(ge=1, le=366)
             "mean_time_to_resolve_hours": resolve_hours(tickets),
             "experiments": len(logs),
             "experiment_success_rate": success_rate(logs),
+            "up_hours": round(sum(u["up"] for u in uptime.values()), 1),
+            "down_hours": round(sum(u["down"] for u in uptime.values()), 1),
+            "uptime": share(sum(u["up"] for u in uptime.values()), sum(u["down"] for u in uptime.values())),
+        },
+        # Booked hours by who booked: students, staff, admins (hours and share of all booked hours).
+        "by_group": {
+            group: {"hours": round(hours, 1), "share": round(hours / booked, 3) if booked else 0}
+            for group, hours in by_group.items()
         },
         "robots": [
             {
@@ -113,6 +188,10 @@ def usage_stats(_: CurrentUser, db: DB, days: Annotated[int, Query(ge=1, le=366)
                 "mean_time_to_resolve_hours": resolve_hours(tickets_by_robot[robot.id]),
                 "experiments": len(logs_by_robot[robot.id]),
                 "experiment_success_rate": success_rate(logs_by_robot[robot.id]),
+                # Hours in service (available) and out of service (maintenance or defect), and the share up.
+                "up_hours": round(uptime[robot.id]["up"], 1),
+                "down_hours": round(uptime[robot.id]["down"], 1),
+                "uptime": share(uptime[robot.id]["up"], uptime[robot.id]["down"]),
             }
             for robot in robots
         ],

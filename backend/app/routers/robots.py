@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 from ..auth import DB, AdminUser, CurrentUser
 from ..config import get_settings
 from ..models import Reservation, Robot, RobotStatus, Role, Ticket, TicketStatus, User, utcnow
-from ..schemas import LiveStatus, RobotCreate, RobotOut, RobotUpdate
+from ..schemas import LastUse, LiveStatus, RobotCreate, RobotOut, RobotUpdate
 
 router = APIRouter(prefix="/robots", tags=["robots"])
 
@@ -39,6 +39,21 @@ def to_out(db: Session, robots: list[Robot]) -> list[RobotOut]:
             .group_by(Ticket.robot_id)
         ).all()
     )
+    # The latest booking per robot that has started (running now or over): "who had it last".
+    latest = (
+        select(Reservation.robot_id, func.max(Reservation.start).label("start"))
+        .where(Reservation.robot_id.in_(ids), Reservation.start <= now)
+        .group_by(Reservation.robot_id)
+        .subquery()
+    )
+    last_use = {
+        r.robot_id: r
+        for r in db.scalars(
+            select(Reservation).join(
+                latest, (Reservation.robot_id == latest.c.robot_id) & (Reservation.start == latest.c.start)
+            )
+        )
+    }
     online_since = now - timedelta(seconds=get_settings().live_timeout_seconds)
     result = []
     for robot in robots:
@@ -56,6 +71,8 @@ def to_out(db: Session, robots: list[Robot]) -> list[RobotOut]:
                     "current_reservation_id": reservation_id,
                     "open_tickets": open_tickets.get(robot.id, 0),
                     "has_api_key": robot.api_key_hash is not None,
+                    "equipment": robot.equipment or [],
+                    "last_use": LastUse.model_validate(last_use[robot.id]) if robot.id in last_use else None,
                     "live": None
                     if robot.api_key_hash is None
                     else LiveStatus(
@@ -76,6 +93,10 @@ def _validate(db: Session, data: dict):
         raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, "Responsible user does not exist")
     if data.get("documentation_url") is not None:
         data["documentation_url"] = str(data["documentation_url"])
+
+
+# What the robot's responsible person may change without being an admin.
+RESPONSIBLE_MAY_EDIT = {"status", "location", "description", "firmware", "operating_system", "equipment"}
 
 
 @router.get("", response_model=list[RobotOut])
@@ -106,7 +127,7 @@ def update_robot(robot_id: int, data: RobotUpdate, user: CurrentUser, db: DB):
     robot = get_robot_or_404(db, robot_id)
     changes = data.model_dump(exclude_unset=True)
     is_responsible = robot.responsible_user_id == user.id
-    if user.role != Role.admin and not (is_responsible and changes.keys() <= {"status", "location", "description"}):
+    if user.role != Role.admin and not (is_responsible and changes.keys() <= RESPONSIBLE_MAY_EDIT):
         raise HTTPException(
             status.HTTP_403_FORBIDDEN, "Only admins, or the responsible person for status/location, may edit"
         )

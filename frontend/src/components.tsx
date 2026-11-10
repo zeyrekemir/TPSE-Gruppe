@@ -41,8 +41,8 @@ export function ReservationForm({
   const [conflict, setConflict] = useState<ConflictDetail | null>(null)
   const bookable = robots.filter((r) => r.status !== 'defect' && r.status !== 'retired')
 
-  async function submit(e: FormEvent) {
-    e.preventDefault()
+  async function submit(e?: FormEvent, override = false) {
+    e?.preventDefault()
     if (robotId === '') return setError(t('reservation.pickRobot'))
     setError(null)
     setConflict(null)
@@ -52,6 +52,7 @@ export function ReservationForm({
         start: fromLocalInput(start),
         end: fromLocalInput(end),
         purpose: purpose || undefined,
+        override: override || undefined,
       })
       onDone()
     } catch (err) {
@@ -110,6 +111,14 @@ export function ReservationForm({
               {formatDateTime(conflict.suggested_end, i18n.language)}{' '}
               <button type="button" className="secondary" onClick={useSuggestion}>
                 {t('reservation.useSuggestion')}
+              </button>
+            </p>
+          )}
+          {conflict.can_override && (
+            <p>
+              <span className="muted">{t('reservation.overrideHint')}</span>{' '}
+              <button type="button" className="secondary danger" onClick={() => submit(undefined, true)}>
+                {t('reservation.override')}
               </button>
             </p>
           )}
@@ -316,8 +325,11 @@ export function LogForm({ robots, robotId, onDone }: { robots: Robot[]; robotId?
     date: toLocalInput(new Date()),
     title: '',
     description: '',
+    procedure: '',
     result: 'success' as ExperimentResult,
   })
+  const [files, setFiles] = useState<File[]>([])
+  const [fileInput, setFileInput] = useState(0) // bumped to clear the file picker after saving
   const [error, setError] = useState<string | null>(null)
   // Until someone picks a date, the field shows "now" and keeps up with the clock (a form left open would
   // otherwise log the time it was opened). A picked date stays as it is, for logging earlier runs.
@@ -331,14 +343,23 @@ export function LogForm({ robots, robotId, onDone }: { robots: Robot[]; robotId?
     e.preventDefault()
     if (form.robot_id === '') return
     try {
-      await api.createLog({
+      const log = await api.createLog({
         ...form,
         robot_id: form.robot_id,
         date: fromLocalInput(followClock ? toLocalInput(new Date()) : form.date),
         description: form.description || undefined,
+        procedure: form.procedure || undefined,
       })
-      setForm((f) => ({ ...f, title: '', description: '', date: toLocalInput(new Date()) }))
+      setForm((f) => ({ ...f, title: '', description: '', procedure: '', date: toLocalInput(new Date()) }))
       setFollowClock(true)
+      setError(null)
+      try {
+        for (const file of files) await api.addAttachment(log.id, file)
+      } catch (err) {
+        setError(`${t('log.attachFailed')} ${(err as Error).message}`)
+      }
+      setFiles([])
+      setFileInput((n) => n + 1)
       onDone()
     } catch (err) {
       setError((err as Error).message)
@@ -394,6 +415,38 @@ export function LogForm({ robots, robotId, onDone }: { robots: Robot[]; robotId?
         {t('log.description')}
         <textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} rows={3} />
       </label>
+      <label className="span-2">
+        {t('log.procedure')}
+        <textarea
+          value={form.procedure}
+          onChange={(e) => setForm({ ...form, procedure: e.target.value })}
+          rows={3}
+          placeholder={t('log.procedureHint')}
+        />
+      </label>
+      <div className="span-2 file-field">
+        <span className="file-field-label" id="log-files-label">
+          {t('log.attachments')}
+        </span>
+        <label className="button secondary file-pick">
+          {t('log.chooseFiles')}
+          <input
+            key={fileInput}
+            type="file"
+            multiple
+            className="sr-only"
+            aria-labelledby="log-files-label"
+            aria-describedby="log-files-hint"
+            onChange={(e) => setFiles(Array.from(e.target.files ?? []))}
+          />
+        </label>
+        <span className="muted small">
+          {files.length ? files.map((f) => f.name).join(', ') : t('log.noFiles')}
+        </span>
+        <p id="log-files-hint" className="muted small field-hint">
+          {t('log.attachmentsHint')}
+        </p>
+      </div>
       <ErrorBox message={error} />
       <div className="actions span-2">
         <button type="submit">{t('common.add')}</button>
@@ -428,6 +481,13 @@ export function LogTable({ logs, showRobot, onChange }: { logs: ExperimentLog[];
               <td>
                 {l.title}
                 {l.description && <div className="muted small">{l.description}</div>}
+                {l.procedure && (
+                  <details className="log-procedure">
+                    <summary>{t('log.procedure')}</summary>
+                    <p className="prewrap small">{l.procedure}</p>
+                  </details>
+                )}
+                <Attachments log={l} canEdit={user?.role === 'admin' || user?.id === l.user.id} onChange={onChange} />
               </td>
               <td>
                 <span className={`badge badge-result-${l.result}`}>{t(`log.results.${l.result}`)}</span>
@@ -451,6 +511,66 @@ export function LogTable({ logs, showRobot, onChange }: { logs: ExperimentLog[];
           ))}
         </tbody>
       </table>
+    </div>
+  )
+}
+
+function formatSize(bytes: number) {
+  if (bytes < 1024) return `${bytes} B`
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`
+  return `${(bytes / 1024 / 1024).toFixed(1)} MB`
+}
+
+/** A log's files: download for everyone; add and remove for its author and admins. */
+function Attachments({ log, canEdit, onChange }: { log: ExperimentLog; canEdit: boolean; onChange: () => void }) {
+  const { t } = useTranslation()
+  const [error, setError] = useState<string | null>(null)
+  if (!log.attachments.length && !canEdit) return null
+  const run = (job: () => Promise<unknown>) =>
+    job()
+      .then(() => setError(null))
+      .catch((err: Error) => setError(err.message))
+  return (
+    <div className="attachments">
+      {log.attachments.length > 0 && (
+        <ul aria-label={t('log.attachments')}>
+          {log.attachments.map((a) => (
+            <li key={a.id}>
+              <button type="button" className="link" onClick={() => run(() => api.downloadAttachment(log.id, a))}>
+                {a.filename}
+              </button>{' '}
+              <span className="muted small">{formatSize(a.size)}</span>
+              {canEdit && (
+                <button
+                  type="button"
+                  className="link danger"
+                  aria-label={`${t('common.delete')}: ${a.filename}`}
+                  onClick={() =>
+                    confirm(t('common.confirmDelete')) && run(() => api.deleteAttachment(log.id, a.id).then(onChange))
+                  }
+                >
+                  {t('common.delete')}
+                </button>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
+      {canEdit && (
+        <label className="link small attach-add">
+          + {t('log.addFile')}
+          <input
+            type="file"
+            className="sr-only"
+            onChange={(e) => {
+              const file = e.target.files?.[0]
+              e.target.value = ''
+              if (file) run(() => api.addAttachment(log.id, file).then(onChange))
+            }}
+          />
+        </label>
+      )}
+      {error && <div className="error small">{error}</div>}
     </div>
   )
 }

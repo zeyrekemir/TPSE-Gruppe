@@ -1,8 +1,9 @@
 from datetime import datetime
+from typing import Annotated
 
-from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, HttpUrl, model_validator
+from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, HttpUrl, StringConstraints, model_validator
 
-from .models import AuthSource, ExperimentResult, Role, RobotStatus, TicketKind, TicketStatus
+from .models import AuthSource, ExperimentResult, MemberType, Role, RobotStatus, TicketKind, TicketStatus
 
 
 class ORM(BaseModel):
@@ -25,6 +26,7 @@ class UserBrief(ORM):
 class UserOut(UserBrief):
     email: str | None
     role: Role
+    member_type: MemberType
     auth_source: AuthSource
     language: str
     is_active: bool
@@ -36,6 +38,7 @@ class UserCreate(BaseModel):
     email: str | None = None
     password: str = Field(min_length=8)
     role: Role = Role.member
+    member_type: MemberType = MemberType.student
     language: str = Field(default="de", pattern="^(de|en)$")
 
 
@@ -43,6 +46,7 @@ class UserUpdate(BaseModel):
     display_name: str | None = Field(default=None, min_length=1, max_length=128)
     email: str | None = None
     role: Role | None = None
+    member_type: MemberType | None = None
     language: str | None = Field(default=None, pattern="^(de|en)$")
     is_active: bool | None = None
     password: str | None = Field(default=None, min_length=8)
@@ -56,6 +60,9 @@ class MeUpdate(BaseModel):
 
 # --- Robots ---
 
+EquipmentItem = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=128)]
+Equipment = Annotated[list[EquipmentItem], Field(max_length=50)]
+
 class RobotBase(BaseModel):
     name: str = Field(min_length=1, max_length=128)
     type: str = Field(min_length=1, max_length=128)
@@ -64,6 +71,9 @@ class RobotBase(BaseModel):
     documentation_url: HttpUrl | None = None
     description: str | None = None
     status: RobotStatus = RobotStatus.available
+    firmware: str | None = Field(default=None, max_length=128)
+    operating_system: str | None = Field(default=None, max_length=128)
+    equipment: Equipment = []
 
 
 class RobotCreate(RobotBase):
@@ -78,6 +88,17 @@ class RobotUpdate(BaseModel):
     documentation_url: HttpUrl | None = None
     description: str | None = None
     status: RobotStatus | None = None
+    firmware: str | None = Field(default=None, max_length=128)
+    operating_system: str | None = Field(default=None, max_length=128)
+    equipment: Equipment | None = None
+
+
+class LastUse(ORM):
+    """The latest booking that has started: who had (or has) the robot, and when."""
+
+    user: UserBrief
+    start: datetime
+    end: datetime
 
 
 class LiveStatus(BaseModel):
@@ -108,6 +129,10 @@ class RobotOut(ORM):
     documentation_url: str | None
     description: str | None
     status: RobotStatus
+    firmware: str | None = None
+    operating_system: str | None = None
+    equipment: list[str] = []
+    last_use: LastUse | None = None
     # Status as users should see it: "reserved" if available but booked right now.
     availability: str
     current_reservation_id: int | None = None
@@ -125,6 +150,8 @@ class ReservationCreate(BaseModel):
     start: AwareDatetime
     end: AwareDatetime
     purpose: str | None = Field(default=None, max_length=512)
+    # Replace the bookings in the way, if they all belong to people of a lower rank (see reservations.rank).
+    override: bool = False
 
     @model_validator(mode="after")
     def _check_range(self):
@@ -137,6 +164,7 @@ class ReservationUpdate(BaseModel):
     start: AwareDatetime | None = None
     end: AwareDatetime | None = None
     purpose: str | None = Field(default=None, max_length=512)
+    override: bool = False
 
 
 class ReservationOut(ORM):
@@ -157,6 +185,8 @@ class ConflictDetail(BaseModel):
     conflicts: list[ReservationOut]
     suggested_start: datetime | None
     suggested_end: datetime | None
+    # True when the person asking outranks everyone in the way, so they may resend with override=true.
+    can_override: bool = False
 
 
 # --- Tickets ---
@@ -209,6 +239,7 @@ class LogCreate(BaseModel):
     date: AwareDatetime
     title: str = Field(min_length=1, max_length=256)
     description: str | None = None
+    procedure: str | None = None
     result: ExperimentResult
 
 
@@ -216,7 +247,16 @@ class LogUpdate(BaseModel):
     date: AwareDatetime | None = None
     title: str | None = Field(default=None, min_length=1, max_length=256)
     description: str | None = None
+    procedure: str | None = None
     result: ExperimentResult | None = None
+
+
+class AttachmentOut(ORM):
+    id: int
+    filename: str
+    content_type: str
+    size: int
+    created_at: datetime
 
 
 class LogOut(ORM):
@@ -227,5 +267,7 @@ class LogOut(ORM):
     date: datetime
     title: str
     description: str | None
+    procedure: str | None = None
     result: ExperimentResult
+    attachments: list[AttachmentOut] = []
     created_at: datetime

@@ -54,22 +54,30 @@ export default function CalendarPage() {
     [robotFilter, mineOnly, user, version],
   )
 
-  async function move(arg: EventDropArg | EventResizeDoneArg) {
+  async function move(arg: EventDropArg | EventResizeDoneArg, override = false) {
     try {
       await api.updateReservation(Number(arg.event.id), {
         start: arg.event.start!.toISOString(),
         end: arg.event.end!.toISOString(),
+        override: override || undefined,
       })
       setError(null)
+      if (override) setVersion((v) => v + 1)
     } catch (err) {
-      arg.revert()
       if (err instanceof ApiError && err.status === 409) {
         const c = err.detail as ConflictDetail
+        const names = c.conflicts.map((r) => r.user.display_name).join(', ')
+        // Staff may replace students' bookings: ask, then try again with override.
+        if (!override && c.can_override && confirm(t('reservation.overrideConfirm', { names }))) return move(arg, true)
+        arg.revert()
         setError(
           `${t('reservation.conflict')} ${t('reservation.suggestion')}: ` +
             `${formatDateTime(c.suggested_start!, i18n.language)} – ${formatDateTime(c.suggested_end!, i18n.language)}`,
         )
-      } else setError((err as Error).message)
+      } else {
+        arg.revert()
+        setError((err as Error).message)
+      }
     }
   }
 

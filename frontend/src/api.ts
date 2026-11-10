@@ -1,6 +1,8 @@
 // Thin client for the FastAPI backend. Types mirror backend/app/schemas.py.
 
 export type Role = 'admin' | 'member'
+/** Who a member is in the lab; staff may override students' bookings. */
+export type MemberType = 'student' | 'staff'
 export type RobotStatus = 'available' | 'maintenance' | 'defect' | 'retired'
 export type Availability = RobotStatus | 'reserved'
 export type TicketKind = 'maintenance' | 'fault'
@@ -16,6 +18,7 @@ export interface UserBrief {
 export interface User extends UserBrief {
   email: string | null
   role: Role
+  member_type: MemberType
   auth_source: 'local' | 'ldap' | 'oidc'
   language: 'de' | 'en'
   is_active: boolean
@@ -30,6 +33,11 @@ export interface Robot {
   documentation_url: string | null
   description: string | null
   status: RobotStatus
+  firmware: string | null
+  operating_system: string | null
+  equipment: string[]
+  /** The latest booking that has started: who had (or has) the robot. */
+  last_use: { user: UserBrief; start: string; end: string } | null
   availability: Availability
   current_reservation_id: number | null
   open_tickets: number
@@ -62,7 +70,13 @@ export interface RobotStats {
   mean_time_to_resolve_hours: number | null
   experiments: number
   experiment_success_rate: number | null
+  up_hours: number
+  down_hours: number
+  /** Share of time in service (available) out of in or out of service; null without history. */
+  uptime: number | null
 }
+
+export type BookingGroup = 'student' | 'staff' | 'admin'
 
 export interface Stats {
   range: { start: string; end: string; days: number; lab_hours: number }
@@ -74,7 +88,12 @@ export interface Stats {
     mean_time_to_resolve_hours: number | null
     experiments: number
     experiment_success_rate: number | null
+    up_hours: number
+    down_hours: number
+    uptime: number | null
   }
+  /** Booked hours by who booked them. */
+  by_group: Record<BookingGroup, { hours: number; share: number }>
   robots: RobotStats[]
   top_users: { user_id: number; display_name: string; reserved_hours: number; reservations: number }[]
   daily: { date: string; hours: number }[]
@@ -98,6 +117,8 @@ export interface ConflictDetail {
   conflicts: Reservation[]
   suggested_start: string | null
   suggested_end: string | null
+  /** The person asking outranks everyone in the way and may resend with override. */
+  can_override: boolean
 }
 
 export interface TicketEvent {
@@ -134,8 +155,26 @@ export interface ExperimentLog {
   date: string
   title: string
   description: string | null
+  procedure: string | null
   result: ExperimentResult
+  attachments: Attachment[]
   created_at: string
+}
+
+export interface Attachment {
+  id: number
+  filename: string
+  content_type: string
+  size: number
+  created_at: string
+}
+
+/** Saves a downloaded file in the browser under its own name. */
+function saveBlob(blob: Blob, filename: string) {
+  const url = URL.createObjectURL(blob)
+  const a = Object.assign(document.createElement('a'), { href: url, download: filename })
+  a.click()
+  setTimeout(() => URL.revokeObjectURL(url), 1000)
 }
 
 export class ApiError extends Error {
@@ -183,16 +222,17 @@ export function setToken(token: string | null) {
   }
 }
 
-async function request<T>(method: string, path: string, body?: unknown): Promise<T> {
+async function request<T>(method: string, path: string, body?: unknown, raw = false): Promise<T> {
   const headers: Record<string, string> = {}
   const token = getToken()
   if (token) headers.Authorization = `Bearer ${token}`
-  if (body !== undefined) headers['Content-Type'] = 'application/json'
+  const form = body instanceof FormData
+  if (body !== undefined && !form) headers['Content-Type'] = 'application/json'
 
   const res = await fetch(`/api${path}`, {
     method,
     headers,
-    body: body === undefined ? undefined : JSON.stringify(body),
+    body: body === undefined ? undefined : form ? body : JSON.stringify(body),
   })
   if (res.status === 401 && path !== '/auth/login') {
     setToken(null)
@@ -202,6 +242,7 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
     const data = await res.json().catch(() => ({}))
     throw new ApiError(res.status, data.detail ?? res.statusText)
   }
+  if (raw) return res.blob() as Promise<T>
   return res.status === 204 ? (undefined as T) : res.json()
 }
 
@@ -236,12 +277,16 @@ export const api = {
   /** Right of access: everything stored about the signed-in person, saved as a JSON file. */
   async downloadMyData() {
     const data = await request<unknown>('GET', '/auth/me/export')
-    const url = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }))
-    const a = Object.assign(document.createElement('a'), { href: url, download: 'pearl-robot-hub-my-data.json' })
-    a.click()
-    URL.revokeObjectURL(url)
+    saveBlob(new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }), 'pearl-robot-hub-my-data.json')
   },
-  createUser: (data: { username: string; display_name: string; email?: string; password: string; role: Role }) =>
+  createUser: (data: {
+    username: string
+    display_name: string
+    email?: string
+    password: string
+    role: Role
+    member_type: MemberType
+  }) =>
     request<User>('POST', '/users', data),
   updateUser: (id: number, data: Partial<User> & { password?: string }) =>
     request<User>('PATCH', `/users/${id}`, data),
@@ -257,9 +302,9 @@ export const api = {
 
   reservations: (params: { robot_id?: number; user_id?: number; start?: string; end?: string } = {}) =>
     request<Reservation[]>('GET', `/reservations${query(params)}`),
-  createReservation: (data: { robot_id: number; start: string; end: string; purpose?: string }) =>
+  createReservation: (data: { robot_id: number; start: string; end: string; purpose?: string; override?: boolean }) =>
     request<Reservation>('POST', '/reservations', data),
-  updateReservation: (id: number, data: { start?: string; end?: string; purpose?: string }) =>
+  updateReservation: (id: number, data: { start?: string; end?: string; purpose?: string; override?: boolean }) =>
     request<Reservation>('PATCH', `/reservations/${id}`, data),
   deleteReservation: (id: number) => request<void>('DELETE', `/reservations/${id}`),
 
@@ -277,9 +322,24 @@ export const api = {
 
   logs: (params: { robot_id?: number; user_id?: number } = {}) =>
     request<ExperimentLog[]>('GET', `/logs${query(params)}`),
-  createLog: (data: { robot_id: number; date: string; title: string; description?: string; result: ExperimentResult }) =>
-    request<ExperimentLog>('POST', '/logs', data),
+  createLog: (data: {
+    robot_id: number
+    date: string
+    title: string
+    description?: string
+    procedure?: string
+    result: ExperimentResult
+  }) => request<ExperimentLog>('POST', '/logs', data),
   deleteLog: (id: number) => request<void>('DELETE', `/logs/${id}`),
+  addAttachment: (logId: number, file: File) => {
+    const form = new FormData()
+    form.append('file', file)
+    return request<Attachment>('POST', `/logs/${logId}/attachments`, form)
+  },
+  async downloadAttachment(logId: number, a: Attachment) {
+    saveBlob(await request<Blob>('GET', `/logs/${logId}/attachments/${a.id}`, undefined, true), a.filename)
+  },
+  deleteAttachment: (logId: number, id: number) => request<void>('DELETE', `/logs/${logId}/attachments/${id}`),
 }
 
 export interface RobotInput {
@@ -290,4 +350,7 @@ export interface RobotInput {
   documentation_url: string | null
   description: string | null
   status: RobotStatus
+  firmware: string | null
+  operating_system: string | null
+  equipment: string[]
 }

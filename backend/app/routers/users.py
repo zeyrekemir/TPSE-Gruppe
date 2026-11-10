@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException, status
 from sqlalchemy import delete, select, update
 
 from ..auth import DB, AdminUser, CurrentUser, hash_password
-from ..models import AuthSource, Reservation, Robot, Role, Ticket, User, utcnow
+from ..models import AuthSource, MemberType, Reservation, Robot, Role, Ticket, User, utcnow
 from ..schemas import UserCreate, UserOut, UserUpdate
 
 router = APIRouter(prefix="/users", tags=["users"])
@@ -65,6 +65,7 @@ def erase_user(user_id: int, admin: AdminUser, db: DB):
     user.email = None
     user.password_hash = None
     user.role = Role.member
+    user.member_type = MemberType.student
     user.auth_source = AuthSource.local  # never matched by a later LDAP or TU-ID sign-in
     user.is_active = False
     db.execute(delete(Reservation).where(Reservation.user_id == user.id, Reservation.start > utcnow()))

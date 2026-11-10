@@ -41,14 +41,21 @@ export default function RobotsPage() {
           <Wave text={t('nav.robots')} />
         </h1>
         </div>
-        {user?.role === 'admin' && !creating && (
+        {!creating && (
           <div className="actions">
-            <Link to="/labels" className="button secondary">
-              <QrIcon /> {t('labels.print')}
+            <Link to="/board" className="button secondary">
+              {t('board.open')}
             </Link>
-            <button onClick={() => setCreating(true)}>
-              <PlusIcon /> {t('robot.new')}
-            </button>
+            {user?.role === 'admin' && (
+              <>
+                <Link to="/labels" className="button secondary">
+                  <QrIcon /> {t('labels.print')}
+                </Link>
+                <button onClick={() => setCreating(true)}>
+                  <PlusIcon /> {t('robot.new')}
+                </button>
+              </>
+            )}
           </div>
         )}
       </header>

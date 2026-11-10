@@ -16,6 +16,9 @@ const en = {
     new: 'New robot', type: 'Type', location: 'Location', responsible: 'Responsible', documentation: 'Documentation',
     description: 'Description', status: 'Status', openTickets: 'Open tickets', reserve: 'Reserve',
     upcoming: 'Upcoming reservations', noRobots: 'No robots yet.',
+    firmware: 'Firmware', os: 'Operating system', equipment: 'Equipment',
+    equipmentHint: 'One item per line, e.g. Franka Hand', lastUse: 'Last used by', inUse: 'in use now',
+    neverUsed: 'Not used yet',
   },
   picker: {
     open: 'Choose date and time', title: 'Date and time', prev: 'Previous month', next: 'Next month',
@@ -26,6 +29,8 @@ const en = {
     conflict: 'This slot is already taken.', conflictsWith: 'Conflicts with', suggestion: 'Next free slot',
     useSuggestion: 'Use this slot', mine: 'Only mine', selectHint: 'Drag across the calendar to reserve a robot.',
     pickRobot: 'Pick a robot first.',
+    override: 'Replace these bookings', overrideHint: 'You may replace students’ bookings. They are told by e-mail.',
+    overrideConfirm: 'This slot is booked by {{names}}. Replace their booking? They are told by e-mail.',
   },
   ticket: {
     new: 'Report issue', kind: 'Kind', title: 'Title', status: 'Status', reporter: 'Reported by', assignee: 'Assignee',
@@ -38,6 +43,9 @@ const en = {
   log: {
     new: 'New experiment log', date: 'Date', title: 'Title', description: 'Description', result: 'Result',
     person: 'Person', noLogs: 'No experiments logged.',
+    procedure: 'Procedure', procedureHint: 'Step by step: setup, parameters, what was run',
+    attachments: 'Files', attachmentsHint: 'Plots, videos, configs: up to 10 files of 10 MB each.',
+    addFile: 'Add file', chooseFiles: 'Choose files', noFiles: 'No files chosen', attachFailed: 'The log was saved, but a file could not be uploaded:',
     results: { success: 'Success', partial: 'Partial', failure: 'Failure' },
   },
   live: {
@@ -53,6 +61,17 @@ const en = {
     daily: 'Booked hours per day', heatmap: 'When the lab is busy', heatmapHint: 'Booked hours by weekday and hour',
     topUsers: 'Most active users', hours: 'h', none: 'No data in this period.', showTable: 'Show as table',
     weekdays: 'Mon,Tue,Wed,Thu,Fri,Sat,Sun',
+    uptime: 'Uptime', downtime: 'down', uptimeByRobot: 'Uptime and downtime by robot',
+    uptimeHint: 'Hours in service (available) and out of service (maintenance or defect)',
+    upHours: 'In service (h)', downHours: 'Out of service (h)',
+    byGroup: 'Who books the robots', byGroupHint: 'Booked hours by students, staff and admins',
+    groups: { student: 'Students', staff: 'Staff', admin: 'Admins' },
+  },
+  board: {
+    open: 'TV board', title: 'Robots right now', exit: 'Leave board', now: 'Now', next: 'Next today',
+    free: 'Free', until: 'until {{time}}', nothingToday: 'Nothing booked',
+    summary: '{{available}} free · {{busy}} in use · {{out}} out of service',
+    issues_one: '{{count}} open issue', issues_other: '{{count}} open issues',
   },
   labels: {
     print: 'Print QR labels', printOne: 'QR label', hint: 'Stick on the robot. Scanning opens its page.',
@@ -74,7 +93,8 @@ const en = {
   },
   user: {
     new: 'New user', username: 'Username', displayName: 'Display name', email: 'E-mail', role: 'Role',
-    password: 'Password', source: 'Source', active: 'Active', erase: 'Erase', eraseConfirm: 'Erase {{name}}? Name, e-mail and sign-in are removed for good, future bookings are cancelled. Past bookings, reports and logs stay as lab records without the name. This cannot be undone.', roles: { admin: 'Admin', member: 'Member' },
+    password: 'Password', source: 'Source', active: 'Active', erase: 'Erase',
+    memberType: 'Group', types: { student: 'Student', staff: 'Staff' }, eraseConfirm: 'Erase {{name}}? Name, e-mail and sign-in are removed for good, future bookings are cancelled. Past bookings, reports and logs stay as lab records without the name. This cannot be undone.', roles: { admin: 'Admin', member: 'Member' },
   },
 }
 
@@ -95,6 +115,9 @@ const de: Dict = {
     new: 'Neuer Roboter', type: 'Typ', location: 'Standort', responsible: 'Verantwortlich', documentation: 'Dokumentation',
     description: 'Beschreibung', status: 'Status', openTickets: 'Offene Meldungen', reserve: 'Reservieren',
     upcoming: 'Kommende Reservierungen', noRobots: 'Noch keine Roboter.',
+    firmware: 'Firmware', os: 'Betriebssystem', equipment: 'Ausstattung',
+    equipmentHint: 'Ein Teil pro Zeile, z. B. Franka Hand', lastUse: 'Zuletzt genutzt von', inUse: 'gerade in Benutzung',
+    neverUsed: 'Noch nicht genutzt',
   },
   picker: {
     open: 'Datum und Uhrzeit wählen', title: 'Datum und Uhrzeit', prev: 'Vorheriger Monat', next: 'Nächster Monat',
@@ -105,6 +128,8 @@ const de: Dict = {
     conflict: 'Dieser Zeitraum ist bereits belegt.', conflictsWith: 'Überschneidet sich mit', suggestion: 'Nächster freier Zeitraum',
     useSuggestion: 'Diesen Zeitraum nehmen', mine: 'Nur meine', selectHint: 'Im Kalender einen Zeitraum ziehen, um zu reservieren.',
     pickRobot: 'Bitte zuerst einen Roboter wählen.',
+    override: 'Diese Buchungen ersetzen', overrideHint: 'Du darfst Buchungen von Studierenden ersetzen. Sie werden per E-Mail informiert.',
+    overrideConfirm: 'Dieser Zeitraum ist von {{names}} gebucht. Buchung ersetzen? Sie werden per E-Mail informiert.',
   },
   ticket: {
     new: 'Problem melden', kind: 'Art', title: 'Titel', status: 'Status', reporter: 'Gemeldet von', assignee: 'Zuständig',
@@ -117,6 +142,9 @@ const de: Dict = {
   log: {
     new: 'Neues Versuchsprotokoll', date: 'Datum', title: 'Titel', description: 'Beschreibung', result: 'Ergebnis',
     person: 'Person', noLogs: 'Keine Versuche protokolliert.',
+    procedure: 'Ablauf', procedureHint: 'Schritt für Schritt: Aufbau, Parameter, was ausgeführt wurde',
+    attachments: 'Dateien', attachmentsHint: 'Plots, Videos, Konfigurationen: bis zu 10 Dateien mit je 10 MB.',
+    addFile: 'Datei hinzufügen', chooseFiles: 'Dateien wählen', noFiles: 'Keine Dateien gewählt', attachFailed: 'Das Protokoll wurde gespeichert, aber eine Datei konnte nicht hochgeladen werden:',
     results: { success: 'Erfolgreich', partial: 'Teilweise', failure: 'Fehlgeschlagen' },
   },
   live: {
@@ -132,6 +160,17 @@ const de: Dict = {
     daily: 'Gebuchte Stunden pro Tag', heatmap: 'Wann das Labor voll ist', heatmapHint: 'Gebuchte Stunden nach Wochentag und Uhrzeit',
     topUsers: 'Aktivste Nutzer', hours: 'Std.', none: 'Keine Daten in diesem Zeitraum.', showTable: 'Als Tabelle zeigen',
     weekdays: 'Mo,Di,Mi,Do,Fr,Sa,So',
+    uptime: 'Verfügbarkeit', downtime: 'Ausfall', uptimeByRobot: 'Betriebs- und Ausfallzeit pro Roboter',
+    uptimeHint: 'Stunden in Betrieb (verfügbar) und außer Betrieb (Wartung oder defekt)',
+    upHours: 'In Betrieb (Std.)', downHours: 'Außer Betrieb (Std.)',
+    byGroup: 'Wer die Roboter bucht', byGroupHint: 'Gebuchte Stunden von Studierenden, Mitarbeitenden und Admins',
+    groups: { student: 'Studierende', staff: 'Mitarbeitende', admin: 'Admins' },
+  },
+  board: {
+    open: 'TV-Anzeige', title: 'Roboter im Moment', exit: 'Anzeige verlassen', now: 'Jetzt', next: 'Als Nächstes heute',
+    free: 'Frei', until: 'bis {{time}}', nothingToday: 'Nichts gebucht',
+    summary: '{{available}} frei · {{busy}} in Benutzung · {{out}} außer Betrieb',
+    issues_one: '{{count}} offene Meldung', issues_other: '{{count}} offene Meldungen',
   },
   labels: {
     print: 'QR-Etiketten drucken', printOne: 'QR-Etikett', hint: 'Auf den Roboter kleben. Scannen öffnet seine Seite.',
@@ -153,7 +192,8 @@ const de: Dict = {
   },
   user: {
     new: 'Neuer Nutzer', username: 'Benutzername', displayName: 'Anzeigename', email: 'E-Mail', role: 'Rolle',
-    password: 'Passwort', source: 'Quelle', active: 'Aktiv', erase: 'Löschen', eraseConfirm: '{{name}} löschen? Name, E-Mail und Zugang werden endgültig entfernt, künftige Buchungen storniert. Vergangene Buchungen, Meldungen und Protokolle bleiben ohne Namen als Laborunterlagen erhalten. Das lässt sich nicht rückgängig machen.', roles: { admin: 'Admin', member: 'Mitglied' },
+    password: 'Passwort', source: 'Quelle', active: 'Aktiv', erase: 'Löschen',
+    memberType: 'Gruppe', types: { student: 'Studierende:r', staff: 'Mitarbeitende:r' }, eraseConfirm: '{{name}} löschen? Name, E-Mail und Zugang werden endgültig entfernt, künftige Buchungen storniert. Vergangene Buchungen, Meldungen und Protokolle bleiben ohne Namen als Laborunterlagen erhalten. Das lässt sich nicht rückgängig machen.', roles: { admin: 'Admin', member: 'Mitglied' },
   },
 }
 

@@ -1625,7 +1625,7 @@ a.button.secondary {
 /* ---------- Statistics ---------- */
 .kpis {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
   gap: 1rem;
   margin-bottom: 1rem;
 }
@@ -3581,4 +3581,276 @@ td .select select {
   .select-panel {
     animation: none;
   }
+}
+
+/* ---------- Robot specification: equipment as small pills ---------- */
+.equipment {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.equipment li {
+  padding: 0.2rem 0.7rem;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  background: var(--accent-soft);
+  border: 1px solid var(--glass-edge);
+}
+
+/* ---------- Experiment logs: procedure and files ---------- */
+.file-field {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.4rem 0.8rem;
+}
+.file-field-label {
+  flex-basis: 100%;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+label.file-pick {
+  flex-direction: row;
+  align-items: center;
+  cursor: pointer;
+  font-size: 0.95rem;
+  font-weight: 650;
+  border-radius: 14px;
+  padding: 0.55rem 1.05rem;
+  color: var(--text);
+  background: rgb(var(--glass-rgb) / calc(var(--glass-alpha) + 0.1));
+  border: 1px solid var(--glass-edge);
+  box-shadow: inset 0 1px 0 var(--glass-hi);
+  transition: border-color 0.2s;
+}
+label.file-pick:hover {
+  border-color: var(--accent);
+}
+.file-pick:focus-within {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.field-hint {
+  flex-basis: 100%;
+  margin: 0;
+}
+.log-procedure {
+  margin-top: 0.35rem;
+}
+.log-procedure summary {
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 650;
+  color: var(--accent);
+}
+.log-procedure p {
+  margin: 0.3rem 0 0;
+}
+.attachments {
+  margin-top: 0.35rem;
+}
+.attachments ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.15rem;
+}
+.attachments li {
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+.attach-add {
+  display: inline-block;
+  margin-top: 0.2rem;
+  cursor: pointer;
+  color: var(--accent);
+  font-weight: 650;
+}
+.attach-add:focus-within {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* ---------- Statistics: who books (students / staff / admins) ---------- */
+.group-bar {
+  display: flex;
+  height: 18px;
+  border-radius: 999px;
+  overflow: hidden;
+  gap: 2px;
+  margin: 0.6rem 0 0.9rem;
+  background: var(--hover);
+}
+.group-bar span {
+  flex-basis: 0;
+  min-width: 4px;
+}
+.group-student {
+  background: #3987e5;
+}
+.group-staff {
+  background: #a855f7;
+}
+.group-admin {
+  background: #94a3b8;
+}
+.group-legend {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.35rem;
+}
+.group-legend li {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+}
+.swatch {
+  width: 12px;
+  height: 12px;
+  border-radius: 4px;
+  flex: none;
+}
+
+/* ---------- TV board: big, calm, readable from across the lab ---------- */
+.board {
+  min-height: 100vh;
+  padding: clamp(16px, 2.5vw, 48px);
+  font-size: clamp(1rem, 0.6rem + 0.8vw, 1.6rem);
+  position: relative;
+}
+.board-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem 2rem;
+  flex-wrap: wrap;
+  margin-bottom: clamp(16px, 2vw, 40px);
+}
+.board-brand {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+.board-brand h1 {
+  margin: 0;
+  font-size: clamp(1.6rem, 1rem + 2vw, 3.4rem);
+}
+.board-brand p {
+  margin: 0.2rem 0 0;
+}
+.board-clock {
+  display: grid;
+  justify-items: end;
+  margin-left: auto;
+  font-variant-numeric: tabular-nums;
+}
+.board-clock span {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(2rem, 1.2rem + 3vw, 5rem);
+  line-height: 1;
+}
+.board-clock small {
+  color: var(--muted);
+}
+.board-exit {
+  font-size: 0.9rem;
+}
+.board-grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 22em), 1fr));
+  gap: clamp(12px, 1.5vw, 28px);
+}
+.board-tile {
+  border-radius: var(--radius);
+  padding: 1.1em 1.2em;
+  display: grid;
+  gap: 0.4em;
+  align-content: start;
+  border-left: 6px solid var(--off);
+}
+.board-tile.tile-available {
+  border-left-color: var(--ok);
+}
+.board-tile.tile-reserved {
+  border-left-color: var(--info);
+}
+.board-tile.tile-maintenance {
+  border-left-color: var(--warn);
+}
+.board-tile.tile-defect {
+  border-left-color: var(--bad);
+}
+.board-tile-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6em;
+}
+.board-tile h2 {
+  margin: 0;
+  font-size: 1.35em;
+}
+.board-tile p {
+  margin: 0;
+}
+.board-tile dl {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.25em 0.8em;
+  margin: 0.3em 0 0;
+}
+.board-tile dt {
+  color: var(--muted);
+}
+.board-tile dd {
+  margin: 0;
+}
+.board-foot {
+  display: flex;
+  align-items: center;
+  gap: 0.8em;
+  flex-wrap: wrap;
+  font-size: 0.85em;
+  min-height: 1.5em;
+}
+.board-issues {
+  color: var(--bad);
+  font-weight: 700;
+}
+
+/* A table inside a card: no second glass layer, and no wrapping of short robot names. */
+.card .table-wrap.flat {
+  background: none;
+  border: 0;
+  box-shadow: none;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+.card .table-wrap.flat td:first-child {
+  white-space: nowrap;
+}
+@media (min-width: 701px) {
+  .card .table-wrap.flat {
+    overflow: visible;
+  }
+}
+/* Users table: the group sits under the role, so the table keeps its width. */
+.select.role-group {
+  margin-top: 0.35rem;
 }

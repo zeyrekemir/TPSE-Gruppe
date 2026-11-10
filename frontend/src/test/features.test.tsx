@@ -57,10 +57,12 @@ const stats: Stats = {
   totals: {
     reservations: 3, reserved_hours: 12.5, tickets_opened: 2, faults_opened: 1,
     mean_time_to_resolve_hours: 4, experiments: 4, experiment_success_rate: 0.75,
+    up_hours: 300, down_hours: 20, uptime: 0.938,
   },
+  by_group: { student: { hours: 10, share: 0.8 }, staff: { hours: 2.5, share: 0.2 }, admin: { hours: 0, share: 0 } },
   robots: [
-    { robot_id: 1, name: 'Franka 1', reserved_hours: 2, reservations: 1, utilization: 0.01, tickets_opened: 0, mean_time_to_resolve_hours: null, experiments: 0, experiment_success_rate: null },
-    { robot_id: 2, name: 'Tiago', reserved_hours: 10.5, reservations: 2, utilization: 0.048, tickets_opened: 2, mean_time_to_resolve_hours: 4, experiments: 4, experiment_success_rate: 0.75 },
+    { robot_id: 1, name: 'Franka 1', reserved_hours: 2, reservations: 1, utilization: 0.01, tickets_opened: 0, mean_time_to_resolve_hours: null, experiments: 0, experiment_success_rate: null, up_hours: 160, down_hours: 0, uptime: 1 },
+    { robot_id: 2, name: 'Tiago', reserved_hours: 10.5, reservations: 2, utilization: 0.048, tickets_opened: 2, mean_time_to_resolve_hours: 4, experiments: 4, experiment_success_rate: 0.75, up_hours: 140, down_hours: 20, uptime: 0.875 },
   ],
   top_users: [{ user_id: 2, display_name: 'Alice', reserved_hours: 12.5, reservations: 3 }],
   daily: [
@@ -80,7 +82,13 @@ describe('statistics page', () => {
     const { container } = render(withAuth(<StatsPage />))
     await screen.findByText('Booked hours', { selector: '.kpi-label' })
     const kpis = [...container.querySelectorAll('.kpi-value')].map((e) => e.textContent)
-    expect(kpis).toEqual(['12.5', '3', '4 h', '75 %'])
+    expect(kpis).toEqual(['12.5', '3', '4 h', '75 %', '94 %'])
+
+    // Uptime per robot, and who books: students and staff.
+    expect(screen.getByRole('row', { name: /Tiago 140 20 88 %/ })).toBeInTheDocument()
+    const legend = [...container.querySelectorAll('.group-legend li')].map((e) => e.textContent)
+    expect(legend[0]).toMatch(/^Students: 80 %/)
+    expect(legend[1]).toMatch(/^Staff: 20 %/)
 
     const names = [...container.querySelectorAll('.hbar-name')].map((e) => e.textContent)
     expect(names).toEqual(['Tiago', 'Franka 1']) // busiest first

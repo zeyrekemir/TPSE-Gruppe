@@ -1,13 +1,14 @@
 from datetime import datetime, timedelta
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, BackgroundTasks, HTTPException, status
 from fastapi.responses import JSONResponse
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from .. import notify
 from ..auth import DB, CurrentUser
 from ..config import get_settings
-from ..models import Reservation, RobotStatus, Role, User, utcnow
+from ..models import MemberType, Reservation, RobotStatus, Role, User, utcnow
 from ..schemas import ConflictDetail, ReservationCreate, ReservationOut, ReservationUpdate
 from .robots import get_robot_or_404
 
@@ -43,13 +44,27 @@ def next_free_slot(
     return candidate, candidate + duration
 
 
-def conflict_response(db: Session, robot_id: int, start: datetime, end: datetime, conflicts, exclude_id=None):
+def rank(user: User) -> int:
+    """Who may override whose booking: admins over staff, staff over students."""
+    if user.role == Role.admin:
+        return 2
+    return 1 if user.member_type == MemberType.staff else 0
+
+
+def can_override(user: User, conflicts: list[Reservation]) -> bool:
+    return bool(conflicts) and all(rank(c.user) < rank(user) for c in conflicts)
+
+
+def conflict_response(
+    db: Session, robot_id: int, start: datetime, end: datetime, conflicts, user: User, exclude_id=None
+):
     s, e = next_free_slot(db, robot_id, start, end, exclude_id)
     detail = ConflictDetail(
         message="The robot is already reserved in this time range",
         conflicts=[ReservationOut.model_validate(c) for c in conflicts],
         suggested_start=s,
         suggested_end=e,
+        can_override=can_override(user, conflicts),
     )
     return JSONResponse(status_code=status.HTTP_409_CONFLICT, content={"detail": detail.model_dump(mode="json")})
 
@@ -67,6 +82,21 @@ def check_booking_rules(user: User, start: datetime, end: datetime) -> None:
         raise HTTPException(
             status.HTTP_400_BAD_REQUEST, f"Reservations can be made at most {settings.max_advance_days} days ahead"
         )
+
+
+def resolve_conflicts(
+    db: Session, user: User, conflicts: list[Reservation], override: bool, background: BackgroundTasks
+) -> bool:
+    """Clears the way when `override` is asked for and allowed: the bookings in the way are cancelled and their
+    owners told by e-mail. Returns False when the conflicts stand (the caller answers 409)."""
+    if not conflicts:
+        return True
+    if not (override and can_override(user, conflicts)):
+        return False
+    for c in conflicts:
+        background.add_task(notify.send, notify.reservation_overridden(c, user))
+        db.delete(c)
+    return True
 
 
 def _get_owned(db: Session, reservation_id: int, user: User) -> Reservation:
@@ -106,7 +136,7 @@ def list_reservations(
     status_code=status.HTTP_201_CREATED,
     responses={409: {"model": ConflictDetail}},
 )
-def create_reservation(data: ReservationCreate, user: CurrentUser, db: DB):
+def create_reservation(data: ReservationCreate, user: CurrentUser, db: DB, background: BackgroundTasks):
     robot = get_robot_or_404(db, data.robot_id, lock=True)
     if robot.status in BLOCKED_STATUSES:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, f"Robot is {robot.status.value} and cannot be reserved")
@@ -114,27 +144,29 @@ def create_reservation(data: ReservationCreate, user: CurrentUser, db: DB):
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "Reservation lies in the past")
     check_booking_rules(user, data.start, data.end)
     conflicts = find_conflicts(db, robot.id, data.start, data.end)
-    if conflicts:
-        return conflict_response(db, robot.id, data.start, data.end, conflicts)
-    reservation = Reservation(**data.model_dump(), user_id=user.id)
+    if not resolve_conflicts(db, user, conflicts, data.override, background):
+        return conflict_response(db, robot.id, data.start, data.end, conflicts, user)
+    reservation = Reservation(**data.model_dump(exclude={"override"}), user_id=user.id)
     db.add(reservation)
     db.commit()
     return reservation
 
 
 @router.patch("/{reservation_id}", response_model=ReservationOut, responses={409: {"model": ConflictDetail}})
-def update_reservation(reservation_id: int, data: ReservationUpdate, user: CurrentUser, db: DB):
+def update_reservation(
+    reservation_id: int, data: ReservationUpdate, user: CurrentUser, db: DB, background: BackgroundTasks
+):
     reservation = _get_owned(db, reservation_id, user)
     get_robot_or_404(db, reservation.robot_id, lock=True)
-    changes = data.model_dump(exclude_unset=True)
+    changes = data.model_dump(exclude_unset=True, exclude={"override"})
     start = changes.get("start", reservation.start)
     end = changes.get("end", reservation.end)
     if end <= start:
         raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, "end must be after start")
     check_booking_rules(user, start, end)
     conflicts = find_conflicts(db, reservation.robot_id, start, end, exclude_id=reservation.id)
-    if conflicts:
-        return conflict_response(db, reservation.robot_id, start, end, conflicts, exclude_id=reservation.id)
+    if not resolve_conflicts(db, user, conflicts, data.override, background):
+        return conflict_response(db, reservation.robot_id, start, end, conflicts, user, exclude_id=reservation.id)
     for key, value in changes.items():
         setattr(reservation, key, value)
     db.commit()

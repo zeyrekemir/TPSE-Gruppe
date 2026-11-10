@@ -55,11 +55,13 @@ export default function RobotDetailPage() {
           <Link to={`/robots/${r.id}/label`} className="button secondary">
             <QrIcon /> {t('labels.printOne')}
           </Link>
+          {(isAdmin || isResponsible) && (
+            <button className="secondary" onClick={() => setEditing(true)}>
+              {t('common.edit')}
+            </button>
+          )}
           {isAdmin && (
             <>
-              <button className="secondary" onClick={() => setEditing(true)}>
-                {t('common.edit')}
-              </button>
               <button
                 className="secondary danger"
                 onClick={async () => {
@@ -79,6 +81,7 @@ export default function RobotDetailPage() {
       {editing && (
         <RobotForm
           robot={r}
+          limited={!isAdmin}
           onCancel={() => setEditing(false)}
           onDone={() => {
             setEditing(false)
@@ -134,6 +137,34 @@ export default function RobotDetailPage() {
               </Select>
             ) : (
               t(`status.${r.status}`)
+            )}
+          </dd>
+          <dt>{t('robot.firmware')}</dt>
+          <dd>{r.firmware ?? t('common.none')}</dd>
+          <dt>{t('robot.os')}</dt>
+          <dd>{r.operating_system ?? t('common.none')}</dd>
+          <dt>{t('robot.equipment')}</dt>
+          <dd>
+            {r.equipment.length ? (
+              <ul className="equipment" aria-label={t('robot.equipment')}>
+                {r.equipment.map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+            ) : (
+              t('common.none')
+            )}
+          </dd>
+          <dt>{t('robot.lastUse')}</dt>
+          <dd>
+            {r.last_use ? (
+              <>
+                <strong>{r.last_use.user.display_name}</strong> · {formatDateTime(r.last_use.start, i18n.language)} –{' '}
+                {formatDateTime(r.last_use.end, i18n.language)}
+                {new Date(r.last_use.end) > new Date() && <span className="muted"> · {t('robot.inUse')}</span>}
+              </>
+            ) : (
+              t('robot.neverUsed')
             )}
           </dd>
           {r.description && (

@@ -185,6 +185,29 @@ def reservation_reminder(reservation: Reservation) -> Message:
     return Message(texts={language: text(language) for language in LANGUAGES}, emails=[found] if found else [])
 
 
+def reservation_overridden(reservation: Reservation, by: User) -> Message:
+    """To the person whose booking was replaced by someone of a higher rank (staff over a student)."""
+    robot = reservation.robot
+    url = link("/calendar")
+
+    def text(language: str) -> tuple[str, str]:
+        start = lab_time(reservation.start, language)
+        if language == "de":
+            return (
+                f"Reservierung ersetzt: {robot.name} am {start}",
+                f"{by.display_name} hat {robot.name} für diesen Zeitraum gebraucht. Deine Reservierung am {start} "
+                f"wurde deshalb storniert. Bitte buche einen anderen Zeitraum.\n\n{url}",
+            )
+        return (
+            f"Reservation replaced: {robot.name} on {start}",
+            f"{by.display_name} needed {robot.name} for this time, so your reservation on {start} was cancelled. "
+            f"Please book another slot.\n\n{url}",
+        )
+
+    found = recipient(reservation.user)
+    return Message(texts={language: text(language) for language in LANGUAGES}, emails=[found] if found else [])
+
+
 # --- Reminder loop ---
 
 def send_due_reminders(settings: Settings | None = None) -> int:

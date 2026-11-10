@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
-import { api, type Role } from '../api'
+import { api, type MemberType, type Role } from '../api'
 import { useAuth } from '../auth'
 import { ErrorBox } from '../ui'
 import { useLoad } from '../util'
@@ -11,14 +11,15 @@ export default function UsersPage() {
   const { t } = useTranslation()
   const { user: me } = useAuth()
   const users = useLoad(api.users)
-  const [form, setForm] = useState({ username: '', display_name: '', email: '', password: '', role: 'member' as Role })
+  const empty = { username: '', display_name: '', email: '', password: '', role: 'member' as Role, member_type: 'student' as MemberType }
+  const [form, setForm] = useState(empty)
   const [error, setError] = useState<string | null>(null)
 
   async function create(e: FormEvent) {
     e.preventDefault()
     try {
       await api.createUser({ ...form, email: form.email || undefined })
-      setForm({ username: '', display_name: '', email: '', password: '', role: 'member' })
+      setForm(empty)
       setError(null)
       users.reload()
     } catch (err) {
@@ -26,7 +27,7 @@ export default function UsersPage() {
     }
   }
 
-  async function update(id: number, data: { role?: Role; is_active?: boolean }) {
+  async function update(id: number, data: { role?: Role; member_type?: MemberType; is_active?: boolean }) {
     try {
       await api.updateUser(id, data)
       setError(null)
@@ -84,6 +85,16 @@ export default function UsersPage() {
             <option value="admin">{t('user.roles.admin')}</option>
           </Select>
         </label>
+        <label>
+          {t('user.memberType')}
+          <Select
+            value={form.member_type}
+            onChange={(e) => setForm({ ...form, member_type: e.target.value as MemberType })}
+          >
+            <option value="student">{t('user.types.student')}</option>
+            <option value="staff">{t('user.types.staff')}</option>
+          </Select>
+        </label>
         <div className="actions span-2">
           <button type="submit">{t('common.add')}</button>
         </div>
@@ -97,7 +108,9 @@ export default function UsersPage() {
               <th>{t('user.displayName')}</th>
               <th>{t('user.email')}</th>
               <th>{t('user.source')}</th>
-              <th>{t('user.role')}</th>
+              <th>
+                {t('user.role')} / {t('user.memberType')}
+              </th>
               <th>{t('user.active')}</th>
               <th>
                 <span className="sr-only">{t('user.erase')}</span>
@@ -120,6 +133,15 @@ export default function UsersPage() {
                   >
                     <option value="member">{t('user.roles.member')}</option>
                     <option value="admin">{t('user.roles.admin')}</option>
+                  </Select>
+                  <Select
+                    className="role-group"
+                    value={u.member_type}
+                    aria-label={t('user.memberType')}
+                    onChange={(e) => update(u.id, { member_type: e.target.value as MemberType })}
+                  >
+                    <option value="student">{t('user.types.student')}</option>
+                    <option value="staff">{t('user.types.staff')}</option>
                   </Select>
                 </td>
                 <td>

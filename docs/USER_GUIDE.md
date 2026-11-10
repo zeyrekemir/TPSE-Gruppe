@@ -32,9 +32,9 @@ The start page shows every robot as a card. Four tiles at the top count robots b
 
 ## 3. Robot page
 
-Everything about one robot: type, location, responsible person, documentation link and description. Below are upcoming reservations, maintenance and fault reports, and experiment logs.
+Everything about one robot: type, location, responsible person, documentation link, its **specification** (firmware and operating system), its **equipment** (gripper, cameras, sensors, ...), a description, and **Last used by**: who had the robot last, and when. Below are upcoming reservations, maintenance and fault reports, and experiment logs.
 
-Admins and the robot's **responsible person** can change its status right here, e.g. to "In maintenance".
+Admins and the robot's **responsible person** can change its status right here, e.g. to "In maintenance". With **Edit**, the responsible person can also keep the location, description, firmware, operating system and equipment up to date (one item of equipment per line).
 
 ## 4. Reserving a robot
 
@@ -46,6 +46,8 @@ Admins and the robot's **responsible person** can change its status right here, 
 You can also use **New reservation** at the top of the calendar, or **Reserve** on a robot's page.
 
 **If the slot is taken**, the Hub shows who you clash with and suggests the **next free slot** of the same length. Click **Use this slot** to take it.
+
+**Staff before students:** members are either *students* or *staff* (set by an admin). If staff need a slot that only students have booked, the Hub offers **Replace these bookings**. The students' bookings are then cancelled, and they are told by e-mail. When you move a booking in the calendar onto such a slot, the Hub asks first. Admins can replace anyone's booking except another admin's. Students cannot replace bookings, and staff cannot replace other staff.
 
 **Changing and deleting:**
 - Drag your own bookings to move them, or drag their bottom edge to change the length. Overlaps are checked here too.
@@ -70,7 +72,9 @@ Each report has a status: **Open → In progress → Resolved**. Click a report 
 
 ## 6. Experiment logs
 
-Under *Experiments*, or on a robot's page: enter date, title, description and result (*Success*, *Partial*, *Failure*). This shows what was last done with a robot. You can delete your own entries.
+Under *Experiments*, or on a robot's page: enter date, title, description, the **procedure** (step by step: setup, parameters, what was run) and result (*Success*, *Partial*, *Failure*). This shows what was last done with a robot.
+
+**Files**: with **Choose files** you attach plots, videos or configs to the entry, up to 10 files of 10 MB each. Later, **+ Add file** under an entry adds more. Everyone can download the files; the author and admins can remove them. You can delete your own entries, together with their files.
 
 ## 7. Live status
 
@@ -88,10 +92,12 @@ The reports come from a small program on the robot's PC (`tools/robot_agent.py`)
 
 *Statistics* in the menu shows how the lab is used. At the top, pick the **period**: 7, 30, 90 or 365 days.
 
-- **Tiles**: booked hours, number of reservations, faults reported, average time to resolve a fault, and the share of successful experiments.
+- **Tiles**: booked hours, number of reservations, faults reported, average time to resolve a fault, the share of successful experiments, and the **uptime**: the share of time the robots were in service, with the hours they were out of service.
 - **Utilisation by robot**: the share of lab hours (Mon–Fri 08–18) for which each robot was booked.
 - **Booked hours per day** across the period.
 - **When the lab is busy**: booked hours by weekday and hour. The stronger the blue, the busier the time, which helps you find a quiet slot.
+- **Uptime and downtime by robot**: hours in service (available) and out of service (maintenance or defect). Every status change is recorded, so these numbers fill in over time.
+- **Who books the robots**: the share of booked hours by students, staff and admins.
 - **Most active users** by booked hours.
 
 **Show as table**, next to *Booked hours per day*, shows those numbers as a table, for example for screen readers or for copying.
@@ -105,7 +111,11 @@ Each robot can get a printed label with a QR code. Scanning it with a phone open
 
 Stick the label on the robot where people can see it.
 
-## 10. Appearance
+## 10. TV board
+
+**TV board** on the overview opens a full-screen board for a screen in the lab. Every robot is a large tile with its status, **who has it now** (and until when), **who is next today**, its live status and its open issues. At the top are the time and how many robots are free, in use or out of service. The board refreshes itself every 15 seconds and also works on a phone. Sign in once in the TV's browser and leave the page open. **Leave board** goes back to the hub.
+
+## 11. Appearance
 
 The sliders icon at the bottom of the sidebar opens the settings:
 
@@ -118,13 +128,13 @@ The sliders icon at the bottom of the sidebar opens the settings:
 
 These settings apply to the current browser only.
 
-## 11. Your data and the legal pages
+## 12. Your data and the legal pages
 
 The links at the bottom of the sidebar open the **Imprint**, the **Privacy notice** and the **Accessibility statement**. They can also be opened without signing in.
 
 On the privacy page you can **download your data**: a JSON file with everything the hub stores about you. If you want your account erased, ask an admin. Your name, e-mail and sign-in are then removed for good, and your future bookings are cancelled. Past bookings, reports and logs stay as lab records, without your name.
 
-## 12. For admins
+## 13. For admins
 
 **Robots**: **New robot** on the overview. A robot's page has **Edit** and **Delete**. Deleting a robot also deletes its reservations, reports and logs.
 
@@ -133,12 +143,13 @@ On the privacy page you can **download your data**: a JSON file with everything 
 - Switch roles between *Member* and *Admin*, or deactivate accounts. Deactivated users are signed out immediately.
 - LDAP accounts are created automatically on first sign-in. If an admin group is configured, the directory decides the role on every sign-in.
 - You cannot demote or deactivate yourself, so there is always an admin left.
-- **Erase** removes a person for good (see chapter 11). This cannot be undone.
+- **Group**: under the role, set whether a person is a *student* or *staff*. New people start as students. Staff can replace students' bookings (see chapter 4).
+- **Erase** removes a person for good (see chapter 12). This cannot be undone.
 - TU-ID accounts are created automatically on first sign-in, as members. The TU-IDs configured as admins on the server become admins.
 
 **Live status keys** and **QR labels for all robots**: see chapters 7 and 9.
 
-## 13. Permissions
+## 14. Permissions
 
 | Action | Who |
 |---|---|
@@ -148,7 +159,7 @@ On the privacy page you can **download your data**: a JSON file with everything 
 | Change/delete a reservation or log | its owner, admin |
 | Change a report's status or assignee | admin, reporter, assignee, robot's responsible person |
 
-## 14. FAQ
+## 15. FAQ
 
 **I got signed out.** A sign-in lasts 12 hours. Just sign in again.
 

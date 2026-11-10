@@ -20,6 +20,7 @@ import { sound } from './sound'
 // Heavy pages are loaded on demand.
 const CalendarPage = lazy(() => import('./pages/CalendarPage'))
 const StatsPage = lazy(() => import('./pages/StatsPage'))
+const BoardPage = lazy(() => import('./pages/BoardPage'))
 const WelcomePage = lazy(() => import('./intro/WelcomePage'))
 
 function storyEnabled(setting: boolean) {
@@ -187,6 +188,14 @@ function Shell() {
                   </Link>
                 </div>
               </WelcomePage>
+            </Suspense>
+          }
+        />
+        <Route
+          path="/board"
+          element={
+            <Suspense fallback={null}>
+              <BoardPage />
             </Suspense>
           }
         />

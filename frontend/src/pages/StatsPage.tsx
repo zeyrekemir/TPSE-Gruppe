@@ -1,7 +1,7 @@
 import { useMemo, useRef, useState, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { api, type Stats } from '../api'
+import { api, type BookingGroup, type Stats } from '../api'
 import { useAppearance } from '../appearance'
 import { ErrorBox } from '../ui'
 import { useLoad } from '../util'
@@ -215,6 +215,35 @@ function Heatmap({ stats }: { stats: Stats }) {
   )
 }
 
+const GROUPS: BookingGroup[] = ['student', 'staff', 'admin']
+
+/** Who books the robots: one bar split into students, staff and admins, with the numbers beside it. */
+function GroupShare({ stats }: { stats: Stats }) {
+  const { t } = useTranslation()
+  const total = GROUPS.reduce((sum, g) => sum + stats.by_group[g].hours, 0)
+  if (!total) return <p className="muted">{t('stats.none')}</p>
+  return (
+    <>
+      <div className="group-bar" aria-hidden="true">
+        {GROUPS.filter((g) => stats.by_group[g].hours > 0).map((g) => (
+          <span key={g} className={`group-${g}`} style={{ flexGrow: stats.by_group[g].hours }} />
+        ))}
+      </div>
+      <ul className="group-legend">
+        {GROUPS.map((g) => (
+          <li key={g}>
+            <span className={`swatch group-${g}`} aria-hidden="true" />
+            {t(`stats.groups.${g}`)}: <strong>{fmtPct(stats.by_group[g].share)}</strong>{' '}
+            <span className="muted">
+              ({fmtHours(stats.by_group[g].hours)} {t('stats.hours')})
+            </span>
+          </li>
+        ))}
+      </ul>
+    </>
+  )
+}
+
 export default function StatsPage() {
   const { t } = useTranslation()
   const [days, setDays] = useState(30)
@@ -263,6 +292,11 @@ export default function StatsPage() {
               value={stats.totals.experiment_success_rate === null ? '–' : fmtPct(stats.totals.experiment_success_rate)}
               hint={`${stats.totals.experiments} ${t('nav.logs')}`}
             />
+            <Kpi
+              label={t('stats.uptime')}
+              value={stats.totals.uptime === null ? '–' : fmtPct(stats.totals.uptime)}
+              hint={`${fmtHours(stats.totals.down_hours)} ${t('stats.hours')} ${t('stats.downtime')}`}
+            />
           </div>
 
           {stats.totals.reservations === 0 && <p className="muted">{t('stats.none')}</p>}
@@ -280,6 +314,40 @@ export default function StatsPage() {
               <h3>{t('stats.heatmap')}</h3>
               <p className="muted small">{t('stats.heatmapHint')}</p>
               <Heatmap stats={stats} />
+            </div>
+          </div>
+
+          <div className="viz-grid-2">
+            <div className="card">
+              <h3>{t('stats.uptimeByRobot')}</h3>
+              <p className="muted small">{t('stats.uptimeHint')}</p>
+              <div className="table-wrap flat">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>{t('reservation.robot')}</th>
+                      <th>{t('stats.upHours')}</th>
+                      <th>{t('stats.downHours')}</th>
+                      <th>{t('stats.uptime')}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {stats.robots.map((r) => (
+                      <tr key={r.robot_id}>
+                        <td>{r.name}</td>
+                        <td>{fmtHours(r.up_hours)}</td>
+                        <td>{fmtHours(r.down_hours)}</td>
+                        <td>{r.uptime === null ? '–' : fmtPct(r.uptime)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            <div className="card">
+              <h3>{t('stats.byGroup')}</h3>
+              <p className="muted small">{t('stats.byGroupHint')}</p>
+              <GroupShare stats={stats} />
             </div>
           </div>
 

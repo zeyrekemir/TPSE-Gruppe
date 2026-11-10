@@ -1,8 +1,8 @@
 import enum
 from datetime import UTC, datetime
 
-from sqlalchemy import DateTime, Enum, ForeignKey, String, Text, TypeDecorator
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy import JSON, DateTime, Enum, ForeignKey, LargeBinary, String, Text, TypeDecorator, event, inspect
+from sqlalchemy.orm import Mapped, Session, mapped_column, relationship
 
 from .db import Base
 
@@ -37,6 +37,13 @@ def _enum(cls):
 class Role(str, enum.Enum):
     admin = "admin"
     member = "member"
+
+
+class MemberType(str, enum.Enum):
+    """Who a person is in the lab. Staff (doctoral and master's thesis work) may override students' bookings."""
+
+    student = "student"
+    staff = "staff"
 
 
 class AuthSource(str, enum.Enum):
@@ -78,6 +85,9 @@ class User(Base):
     email: Mapped[str | None] = mapped_column(String(256))
     password_hash: Mapped[str | None] = mapped_column(String(128))
     role: Mapped[Role] = mapped_column(_enum(Role), default=Role.member)
+    member_type: Mapped[MemberType] = mapped_column(
+        _enum(MemberType), default=MemberType.student, server_default=MemberType.student.value
+    )
     auth_source: Mapped[AuthSource] = mapped_column(_enum(AuthSource), default=AuthSource.local)
     language: Mapped[str] = mapped_column(String(2), default="de")
     is_active: Mapped[bool] = mapped_column(default=True)
@@ -96,6 +106,12 @@ class Robot(Base):
     description: Mapped[str | None] = mapped_column(Text)
     status: Mapped[RobotStatus] = mapped_column(_enum(RobotStatus), default=RobotStatus.available)
     created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
+
+    # Specification: what the robot runs (e.g. an older system for legacy code, or a current Ubuntu).
+    firmware: Mapped[str | None] = mapped_column(String(128))
+    operating_system: Mapped[str | None] = mapped_column(String(128))
+    # Equipment fitted to the robot (gripper, camera, ...), one entry per item; free text goes in `description`.
+    equipment: Mapped[list[str]] = mapped_column(JSON, default=list, server_default="[]")
 
     # Live status, reported by the robot itself via the heartbeat endpoint.
     api_key_hash: Mapped[str | None] = mapped_column(String(64))
@@ -175,10 +191,60 @@ class ExperimentLog(Base):
     title: Mapped[str] = mapped_column(String(256))
     description: Mapped[str | None] = mapped_column(Text)
     result: Mapped[ExperimentResult] = mapped_column(_enum(ExperimentResult))
+    # How the run was done, step by step.
+    procedure: Mapped[str | None] = mapped_column(Text)
     created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
 
     robot: Mapped[Robot] = relationship()
     user: Mapped[User] = relationship()
+    attachments: Mapped[list["LogAttachment"]] = relationship(
+        back_populates="log", cascade="all, delete-orphan", order_by="LogAttachment.id"
+    )
+
+
+class LogAttachment(Base):
+    """A file attached to an experiment log (a plot, a video, a config). Kept in the database, so the nightly
+    backup includes it."""
+
+    __tablename__ = "log_attachments"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    log_id: Mapped[int] = mapped_column(ForeignKey("experiment_logs.id", ondelete="CASCADE"), index=True)
+    filename: Mapped[str] = mapped_column(String(255))
+    content_type: Mapped[str] = mapped_column(String(128))
+    size: Mapped[int]
+    data: Mapped[bytes] = mapped_column(LargeBinary, deferred=True)
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
+
+    log: Mapped[ExperimentLog] = relationship(back_populates="attachments")
+
+
+class RobotStatusChange(Base):
+    """Every change of a robot's status, for uptime and downtime. Written automatically (see below)."""
+
+    __tablename__ = "robot_status_changes"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    robot_id: Mapped[int] = mapped_column(ForeignKey("robots.id", ondelete="CASCADE"), index=True)
+    status: Mapped[RobotStatus] = mapped_column(_enum(RobotStatus))
+    changed_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow, index=True)
+
+    robot: Mapped[Robot] = relationship()
+
+
+@event.listens_for(Session, "before_flush")
+def _record_status_changes(session: Session, _context, _instances) -> None:
+    """Whatever changes a robot's status (an admin, the responsible person, a ticket) leaves a history row."""
+    for obj in list(session.new) + list(session.dirty):
+        if not isinstance(obj, Robot):
+            continue
+        if obj in session.new:
+            if obj.status is None:
+                obj.status = RobotStatus.available
+        elif not inspect(obj).attrs.status.history.has_changes():
+            continue
+        session.add(RobotStatusChange(robot=obj, status=obj.status))
+
 
 
 # Flat names for API responses, so clients don't need a second lookup.

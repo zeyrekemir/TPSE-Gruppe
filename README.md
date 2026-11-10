@@ -12,16 +12,17 @@ Web app for managing the PEARL lab's robots (Franka, xArm, Tiago): inventory, av
 
 ## Features
 
-- **Inventory**: name, type, location, responsible person, documentation link, description.
+- **Inventory**: name, type, location, responsible person, documentation link, description, firmware and operating system, equipment list, and who used the robot last.
 - **Status**: `available`, `maintenance`, `defect`, `retired`, plus a derived `reserved` while a booking is running.
-- **Reservations**: calendar (month/week/day), drag to book, drag/resize to move. Overlaps are rejected with HTTP 409, and the response includes the clashing bookings and the next free slot of the same length.
+- **Reservations**: calendar (month/week/day), drag to book, drag/resize to move. Overlaps are rejected with HTTP 409, and the response includes the clashing bookings and the next free slot of the same length. Members are students or staff: staff (and admins) may override bookings of people below them (`override: true`), and the people whose bookings are replaced get an e-mail.
 - **Maintenance and faults**: tickets with status (`open` → `in_progress` → `resolved`), assignee, and a full history of status changes and comments. A fault can mark the robot as defect right away; when the robot's last open ticket is resolved, it goes back to `available`.
-- **Experiment logs** per robot: date, person, description, result.
+- **Experiment logs** per robot: date, person, description, procedure, result, and file attachments (up to 10 files of 10 MB each, kept in the database so the backups include them; always served as downloads).
 - **Accounts**: local accounts, LDAP and/or single sign-on (OpenID Connect, e.g. TU-ID), with `admin` and `member` roles.
 - **Notifications** (bonus): e-mail (SMTP) and Discord webhook. New faults go to the robot's responsible person, the admins and Discord; status changes go to the reporter; e-mail reminders before a reservation starts. Each channel is off until configured.
 - **Live status** (bonus): each robot (or a small agent next to it, `tools/robot_agent.py`) reports state, battery and a message with its own API key. The UI shows online/offline and refreshes every 10 s.
-- **Statistics** (bonus): utilisation per robot (share of lab hours Mon–Fri 08–18), booked hours per day, a weekday × hour heatmap, top users, mean time to resolve faults, experiment success rate.
+- **Statistics** (bonus): utilisation per robot (share of lab hours Mon–Fri 08–18), booked hours per day, a weekday × hour heatmap, top users, mean time to resolve faults, experiment success rate, uptime and downtime per robot (from a recorded history of every status change), and the share of booked hours by students, staff and admins.
 - **QR codes** (bonus): printable labels per robot; scanning opens the robot's page.
+- **TV board**: `/board`, a full-screen status board for a screen in the lab (now and next today per robot), refreshing every 15 s.
 - **Design**: glass UI over a blueprint drawing of a robot arm whose joints carry the coloured glows; the arm changes pose per page. Light and dark theme, adjustable glass opacity and blur. Before sign-in, a scroll-driven welcome story: a Franka Research 3 (Franka's official CAD model and kinematics, lit by a photographed studio) is assembled joint by joint in four stages. For each joint the camera first moves close to its drive, and every joint has its own gear design (planetary, harmonic, cycloid, and rack-and-pinion in the gripper). Then a crane hook lowers the housing over the drive, and a lock ring with sparks seals the joint. With each stage, one of the four core features (inventory, live status, clash-free booking, maintenance & logs) appears as a card with a small preview of its page, placed so that it never covers the robot. At the end the PEARL logo lands, with the only sound of the intro, and the scene hands over to the blueprint arm behind the sign-in form. Scrolling back rewinds it. Shaders are compiled before it starts, so it runs without stutter. It is skipped for "reduce motion".
 
 ### Permissions
