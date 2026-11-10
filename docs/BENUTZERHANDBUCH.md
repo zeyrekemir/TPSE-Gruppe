@@ -7,8 +7,10 @@ Der Robot Hub ist der zentrale Ort für alle Roboter des PEARL Labs: Wer hat wel
 ## 1. Anmelden
 
 1. Die Adresse des Robot Hub im Browser öffnen.
-2. Vor der Anmeldung zeigt eine kurze Scroll-Story, was der Hub kann: Beim Scrollen nimmt ein Roboterarm vier Funktionsmodule vom Förderband und stellt sie aus. **Zur Anmeldung springen** (oben rechts) überspringt sie.
-3. Mit Benutzername und Passwort anmelden. Ist LDAP eingerichtet, gilt dein normales Lab-/TU-Konto.
+2. Vor der Anmeldung zeigt eine kurze Scroll-Story, was der Hub kann: Beim Scrollen wird eine Franka Research 3 Gelenk für Gelenk zusammengebaut, und zu jeder Baustufe wird eine Funktion des Hubs vorgestellt. **Zur Anmeldung springen** (oben rechts) überspringt sie.
+3. Mit **TU-ID** anmelden (Schaltfläche über dem Formular) oder mit Benutzername und Passwort. Ist LDAP eingerichtet, funktioniert auch dein normales Lab-/TU-Konto.
+
+Nach 5 falschen Passwörtern in Folge ist das Konto für einige Minuten gesperrt. Kurz warten und dann erneut versuchen.
 
 Sprache (**DE/EN**) und Darstellung lassen sich jederzeit unten in der Seitenleiste umstellen. Die Sprache wird für dein Konto gespeichert.
 
@@ -70,19 +72,59 @@ Jede Meldung hat einen Status: **Offen → In Bearbeitung → Erledigt**. Ein Kl
 
 Unter *Versuche* oder auf der Detailseite: Datum, Titel, Beschreibung und Ergebnis (*Erfolgreich*, *Teilweise*, *Fehlgeschlagen*) eintragen. So sieht man, was zuletzt mit einem Roboter gemacht wurde. Eigene Einträge kann man wieder löschen.
 
-## 7. Darstellung anpassen
+## 7. Live-Status
+
+Roboter, die sich melden, zeigen auf ihrer Detailseite einen Kasten **Live-Status**: **Online** oder **Offline**, die Zeit der **letzten Meldung**, den **Akku**-Stand (falls der Roboter einen hat) und eine kurze Nachricht. Die Seite aktualisiert ihn alle 10 Sekunden. Ein Roboter gilt als offline, wenn er sich eine Weile nicht gemeldet hat (standardmäßig 90 Sekunden).
+
+Die Meldungen schickt ein kleines Programm auf dem PC des Roboters (`tools/robot_agent.py`), standardmäßig alle 30 Sekunden. Jeder Roboter hat einen eigenen Schlüssel:
+
+1. Ein Admin öffnet die Detailseite des Roboters und klickt im Kasten *Live-Status* auf **Schlüssel erstellen**.
+2. Der Schlüssel wird **nur einmal** angezeigt. Ihn zusammen mit dem darunter angezeigten Befehl kopieren.
+3. Diesen Befehl auf dem PC des Roboters ausführen.
+
+**Neuer Schlüssel** ersetzt den Schlüssel (der alte wird sofort ungültig), **Schlüssel widerrufen** schaltet die Meldungen ab. Ein Roboter ohne Schlüssel zeigt „Dieser Roboter meldet seinen Status noch nicht.“
+
+## 8. Statistik
+
+Der Menüpunkt *Statistik* zeigt, wie das Labor genutzt wird. Oben den **Zeitraum** wählen: 7, 30, 90 oder 365 Tage.
+
+- **Kacheln**: gebuchte Stunden, Anzahl der Reservierungen, gemeldete Störungen, durchschnittliche Zeit bis zur Lösung einer Störung und der Anteil erfolgreicher Versuche.
+- **Auslastung pro Roboter**: der Anteil der Laborzeit (Mo–Fr 08–18), in der jeder Roboter gebucht war.
+- **Gebuchte Stunden pro Tag** über den Zeitraum.
+- **Wann das Labor voll ist**: gebuchte Stunden nach Wochentag und Uhrzeit. Je kräftiger das Blau, desto voller ist das Labor. So findet man leicht ruhige Zeiten.
+- **Aktivste Nutzer** nach gebuchten Stunden.
+
+**Als Tabelle zeigen** neben *Gebuchte Stunden pro Tag* zeigt diese Zahlen als Tabelle, etwa für Screenreader oder zum Kopieren.
+
+## 9. QR-Etiketten
+
+Jeder Roboter kann ein gedrucktes Etikett mit QR-Code bekommen. Wer es mit dem Handy scannt, landet auf der Detailseite des Roboters mit Status, Buchungen und Meldungen.
+
+- **Ein Etikett**: **QR-Etikett** auf der Detailseite, dann **Drucken**.
+- **Alle Roboter auf einmal** (Admins): **QR-Etiketten drucken** auf der Übersicht, dann **Drucken**.
+
+Das Etikett gut sichtbar auf den Roboter kleben.
+
+## 10. Darstellung anpassen
 
 Das Regler-Symbol unten in der Seitenleiste öffnet die Einstellungen:
 
 - **Hell / Dunkel**
 - **Glas-Deckkraft**: von *Klar* (sehr durchsichtig) bis *Deckend*. Bei schwachem Kontrast den Regler nach rechts schieben.
 - **Unschärfe** des Glas-Effekts
-- **Bewegter Hintergrund** ein-/ausschalten
+- **Ton**: kurze Klänge bei Klicks, Erfolg und Fehlern, ein-/ausschalten
+- **Bewegte Überschriften**: sanft bewegte Überschriften, ein-/ausschalten
 - **Willkommens-Story vor der Anmeldung zeigen** ein-/ausschalten, oder **Willkommens-Story ansehen**
 
 Diese Einstellungen gelten nur für den aktuellen Browser.
 
-## 8. Für Admins
+## 11. Deine Daten und die rechtlichen Seiten
+
+Die Links unten in der Seitenleiste öffnen **Impressum**, **Datenschutzerklärung** und **Erklärung zur Barrierefreiheit**. Sie sind auch ohne Anmeldung erreichbar.
+
+Auf der Datenschutzseite kannst du **deine Daten herunterladen**: eine JSON-Datei mit allem, was der Hub über dich speichert. Soll dein Konto gelöscht werden, wende dich an einen Admin. Name, E-Mail und Anmeldung werden dann endgültig entfernt, und deine künftigen Buchungen werden storniert. Vergangene Buchungen, Meldungen und Protokolle bleiben als Lab-Unterlagen erhalten, ohne deinen Namen.
+
+## 12. Für Admins
 
 **Roboter verwalten**: Auf der Übersicht **Neuer Roboter**. Auf der Detailseite stehen **Bearbeiten** und **Löschen** zur Verfügung. Beim Löschen eines Roboters werden auch seine Reservierungen, Meldungen und Protokolle gelöscht.
 
@@ -91,8 +133,12 @@ Diese Einstellungen gelten nur für den aktuellen Browser.
 - Rolle zwischen *Mitglied* und *Admin* wechseln, Konten deaktivieren. Deaktivierte Nutzer werden sofort abgemeldet.
 - LDAP-Konten entstehen automatisch beim ersten Login. Ist eine Admin-Gruppe konfiguriert, bestimmt das Verzeichnis die Rolle bei jedem Login.
 - Das eigene Konto kann man nicht herabstufen oder deaktivieren, damit immer ein Admin übrig bleibt.
+- **Löschen** entfernt eine Person endgültig (siehe Kapitel 11). Das lässt sich nicht rückgängig machen.
+- TU-ID-Konten entstehen automatisch beim ersten Login, als Mitglied. Die TU-IDs, die auf dem Server als Admins eingetragen sind, werden Admins.
 
-## 9. Rechte im Überblick
+**Schlüssel für den Live-Status** und **QR-Etiketten für alle Roboter**: siehe Kapitel 7 und 9.
+
+## 13. Rechte im Überblick
 
 | Aktion | Wer darf das |
 |---|---|
@@ -102,7 +148,7 @@ Diese Einstellungen gelten nur für den aktuellen Browser.
 | Reservierung/Protokoll ändern oder löschen | Ersteller:in, Admin |
 | Status/Zuständigkeit einer Meldung ändern | Admin, meldende Person, zuständige Person, Verantwortliche:r des Roboters |
 
-## 10. Häufige Fragen
+## 14. Häufige Fragen
 
 **Ich werde plötzlich abgemeldet.** Die Anmeldung gilt 12 Stunden. Danach einfach erneut anmelden.
 

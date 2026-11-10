@@ -7,8 +7,10 @@ The Robot Hub is the one place for all robots of the PEARL lab: who has which ro
 ## 1. Signing in
 
 1. Open the Robot Hub address in your browser.
-2. Before sign-in a short scroll story shows what the hub does: as you scroll, a robot arm takes four feature modules off a conveyor belt and puts them on display. **Skip to sign-in** (top right) jumps past it.
-3. Sign in with username and password. If LDAP is set up, use your normal lab/TU account.
+2. Before sign-in a short scroll story shows what the hub does: as you scroll, a Franka Research 3 is assembled joint by joint, and one feature of the hub is presented with each stage. **Skip to sign-in** (top right) jumps past it.
+3. Sign in with **TU-ID** (the button above the form), or with username and password. If LDAP is set up, your normal lab/TU account works too.
+
+After 5 wrong passwords in a row, the account is locked for a few minutes. Wait, then try again.
 
 Language (**DE/EN**) and appearance can be changed at any time at the bottom of the sidebar. The language is saved with your account.
 
@@ -70,19 +72,59 @@ Each report has a status: **Open → In progress → Resolved**. Click a report 
 
 Under *Experiments*, or on a robot's page: enter date, title, description and result (*Success*, *Partial*, *Failure*). This shows what was last done with a robot. You can delete your own entries.
 
-## 7. Appearance
+## 7. Live status
+
+Robots that report in show a **Live status** box on their page: **Online** or **Offline**, the time of the **last report**, the **battery** level (if the robot has one) and a short message. The page refreshes it every 10 seconds. A robot counts as offline when it has not reported for a while (90 seconds by default).
+
+The reports come from a small program on the robot's PC (`tools/robot_agent.py`), which sends a report every 30 seconds by default. Each robot has its own key:
+
+1. An admin opens the robot's page and clicks **Create key** in the *Live status* box.
+2. The key is shown **only once**. Copy it, together with the command shown below it.
+3. Run that command on the robot's PC.
+
+**New key** replaces the key (the old one stops working at once), and **Revoke key** turns the reports off. A robot without a key says "This robot does not report its status yet."
+
+## 8. Statistics
+
+*Statistics* in the menu shows how the lab is used. At the top, pick the **period**: 7, 30, 90 or 365 days.
+
+- **Tiles**: booked hours, number of reservations, faults reported, average time to resolve a fault, and the share of successful experiments.
+- **Utilisation by robot**: the share of lab hours (Mon–Fri 08–18) for which each robot was booked.
+- **Booked hours per day** across the period.
+- **When the lab is busy**: booked hours by weekday and hour. The stronger the blue, the busier the time, which helps you find a quiet slot.
+- **Most active users** by booked hours.
+
+**Show as table**, next to *Booked hours per day*, shows those numbers as a table, for example for screen readers or for copying.
+
+## 9. QR labels
+
+Each robot can get a printed label with a QR code. Scanning it with a phone opens the robot's page, with its status, bookings and issues.
+
+- **One label**: **QR label** on the robot's page, then **Print**.
+- **All robots at once** (admins): **Print QR labels** on the overview, then **Print**.
+
+Stick the label on the robot where people can see it.
+
+## 10. Appearance
 
 The sliders icon at the bottom of the sidebar opens the settings:
 
 - **Light / Dark**
 - **Glass opacity**: from *Clear* (very see-through) to *Solid*. If text is hard to read, move it to the right.
 - **Blur** of the glass effect
-- **Animated background** on/off
+- **Sound**: short sounds for clicks, success and errors, on/off
+- **Animated headings**: headings that move gently, on/off
 - **Show welcome story before sign-in** on/off, or **Watch welcome story**
 
 These settings apply to the current browser only.
 
-## 8. For admins
+## 11. Your data and the legal pages
+
+The links at the bottom of the sidebar open the **Imprint**, the **Privacy notice** and the **Accessibility statement**. They can also be opened without signing in.
+
+On the privacy page you can **download your data**: a JSON file with everything the hub stores about you. If you want your account erased, ask an admin. Your name, e-mail and sign-in are then removed for good, and your future bookings are cancelled. Past bookings, reports and logs stay as lab records, without your name.
+
+## 12. For admins
 
 **Robots**: **New robot** on the overview. A robot's page has **Edit** and **Delete**. Deleting a robot also deletes its reservations, reports and logs.
 
@@ -91,8 +133,12 @@ These settings apply to the current browser only.
 - Switch roles between *Member* and *Admin*, or deactivate accounts. Deactivated users are signed out immediately.
 - LDAP accounts are created automatically on first sign-in. If an admin group is configured, the directory decides the role on every sign-in.
 - You cannot demote or deactivate yourself, so there is always an admin left.
+- **Erase** removes a person for good (see chapter 11). This cannot be undone.
+- TU-ID accounts are created automatically on first sign-in, as members. The TU-IDs configured as admins on the server become admins.
 
-## 9. Permissions
+**Live status keys** and **QR labels for all robots**: see chapters 7 and 9.
+
+## 13. Permissions
 
 | Action | Who |
 |---|---|
@@ -102,7 +148,7 @@ These settings apply to the current browser only.
 | Change/delete a reservation or log | its owner, admin |
 | Change a report's status or assignee | admin, reporter, assignee, robot's responsible person |
 
-## 10. FAQ
+## 14. FAQ
 
 **I got signed out.** A sign-in lasts 12 hours. Just sign in again.
 
